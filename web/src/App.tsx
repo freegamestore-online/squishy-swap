@@ -14,7 +14,7 @@ export default function App() {
   }, []);
 
   return (
-    <GameShell topbar={<GameTopbar title="Squishy Swap! ✨" score={score} />}>
+    <GameShell topbar={<GameTopbar title="Squishy Swap!" score={score} />}>
       <div ref={hostRef} className="w-full h-full touch-none" />
     </GameShell>
   );

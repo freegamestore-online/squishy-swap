@@ -19,7 +19,7 @@ interface ComputerPlayer {
   name: string;
   emoji: string;
   personality: "generous" | "fair" | "stingy";
-  color: number;
+  color: number; // accent tint for their header
 }
 
 interface ResultData {
@@ -28,6 +28,22 @@ interface ResultData {
   score: number;
   collectionSize: number;
 }
+
+// ─── Palette ─────────────────────────────────────────────────────────────────
+// Dark, sleek, teen-coded: deep navy bg, vivid neon accents, white text.
+
+const BG       = 0x0d0d1a; // near-black navy
+const SURFACE  = 0x16162a; // card surface
+const SURFACE2 = 0x1e1e38; // slightly lighter surface
+const BORDER   = 0x2e2e52; // subtle border
+const ACCENT   = 0x7c3aed; // vivid purple
+const ACCENT2  = 0xa855f7; // lighter purple
+const NEON_G   = 0x4ade80; // neon green (accept)
+const NEON_R   = 0xf43f5e; // neon red (reject)
+const NEON_Y   = 0xfbbf24; // amber (add more)
+const WHITE    = "#ffffff";
+const MUTED    = "#6b7280";
+const SUBTEXT  = "#9ca3af";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -53,15 +69,15 @@ const SQUISHIES: Squishy[] = [
 ];
 
 const COMPUTER_PLAYERS: ComputerPlayer[] = [
-  { name: "Mochi",       emoji: "🧁", personality: "generous", color: 0xf9a8d4 },
-  { name: "Pudding",     emoji: "🍮", personality: "fair",     color: 0xfde68a },
-  { name: "Jellybean",   emoji: "🍬", personality: "stingy",  color: 0xa5f3fc },
-  { name: "Marshmallow", emoji: "☁️", personality: "fair",    color: 0xe9d5ff },
-  { name: "Boba",        emoji: "🧋", personality: "generous", color: 0xbbf7d0 },
+  { name: "Zara",    emoji: "🖤", personality: "stingy",   color: 0x7c3aed },
+  { name: "Kai",     emoji: "🌊", personality: "fair",     color: 0x0ea5e9 },
+  { name: "Nova",    emoji: "🌙", personality: "generous", color: 0xa855f7 },
+  { name: "Reese",   emoji: "🔮", personality: "stingy",   color: 0xec4899 },
+  { name: "Ash",     emoji: "⚡", personality: "generous", color: 0xf59e0b },
 ];
 
 const RARITY_COLORS: Record<Rarity, number> = {
-  "Common":     0xa3a3a3,
+  "Common":     0x6b7280,
   "Uncommon":   0x4ade80,
   "Rare":       0x60a5fa,
   "Epic":       0xc084fc,
@@ -115,6 +131,24 @@ function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)] ?? arr[0]!;
 }
 
+// Draw a rounded rectangle using Phaser Graphics
+function roundRect(
+  gfx: Phaser.GameObjects.Graphics,
+  x: number, y: number, w: number, h: number,
+  r: number, fillColor: number, fillAlpha = 1,
+  strokeColor?: number, strokeWidth = 2,
+): void {
+  gfx.clear();
+  if (strokeColor !== undefined) {
+    gfx.lineStyle(strokeWidth, strokeColor, 1);
+  }
+  gfx.fillStyle(fillColor, fillAlpha);
+  gfx.fillRoundedRect(x, y, w, h, r);
+  if (strokeColor !== undefined) {
+    gfx.strokeRoundedRect(x, y, w, h, r);
+  }
+}
+
 // ─── Menu Scene ───────────────────────────────────────────────────────────────
 
 class MenuScene extends Phaser.Scene {
@@ -123,97 +157,166 @@ class MenuScene extends Phaser.Scene {
   create(): void {
     const col = loadCollection();
 
-    // Soft pink background
-    this.add.rectangle(VW / 2, VH / 2, VW, VH, 0xfdf2f8);
+    // Dark background
+    this.add.rectangle(VW / 2, VH / 2, VW, VH, BG);
 
-    // Floating ambient sparkles
-    const sparkleEmojis = ["✨", "💫", "🌸", "💕", "⭐"];
-    for (let i = 0; i < 18; i++) {
-      const x = Math.random() * VW;
-      const y = Math.random() * VH;
-      const t = this.add.text(x, y, pick(sparkleEmojis), {
-        fontSize: `${10 + Math.random() * 12}px`,
-      }).setAlpha(0.35);
-      this.tweens.add({
-        targets: t,
-        y: y - 50 - Math.random() * 60,
-        alpha: 0,
-        duration: 2500 + Math.random() * 2500,
-        delay: Math.random() * 2500,
-        ease: "Sine.easeIn",
-        repeat: -1,
-        onRepeat: () => {
-          t.x = Math.random() * VW;
-          t.y = VH * 0.2 + Math.random() * VH * 0.7;
-          t.setAlpha(0.35);
-        },
-      });
+    // Subtle grid lines for depth
+    const gridGfx = this.add.graphics();
+    gridGfx.lineStyle(1, 0x1a1a30, 1);
+    for (let x = 0; x < VW; x += 40) {
+      gridGfx.moveTo(x, 0); gridGfx.lineTo(x, VH);
     }
+    for (let y = 0; y < VH; y += 40) {
+      gridGfx.moveTo(0, y); gridGfx.lineTo(VW, y);
+    }
+    gridGfx.strokePath();
 
-    // Big teddy bear icon, bouncing
-    const bear = this.add.text(VW / 2, 150, "🧸", { fontSize: "80px" }).setOrigin(0.5);
+    // Glowing orb behind logo
+    const orbGfx = this.add.graphics();
+    orbGfx.fillStyle(ACCENT, 0.18);
+    orbGfx.fillCircle(VW / 2, 180, 110);
     this.tweens.add({
-      targets: bear,
-      y: 160,
-      duration: 1200,
+      targets: orbGfx,
+      scaleX: 1.12, scaleY: 1.12,
+      duration: 2800,
       yoyo: true,
       repeat: -1,
       ease: "Sine.easeInOut",
     });
 
-    this.add.text(VW / 2, 240, "Squishy Swap!", {
+    // Floating particles
+    const particles = ["✦", "◆", "▸", "✧", "◇"];
+    for (let i = 0; i < 14; i++) {
+      const x = Math.random() * VW;
+      const y = Math.random() * VH;
+      const t = this.add.text(x, y, pick(particles), {
+        fontSize: `${8 + Math.random() * 10}px`,
+        color: hexStr(ACCENT2),
+      }).setAlpha(0.25);
+      this.tweens.add({
+        targets: t,
+        y: y - 60 - Math.random() * 60,
+        alpha: 0,
+        duration: 3000 + Math.random() * 2000,
+        delay: Math.random() * 3000,
+        ease: "Sine.easeIn",
+        repeat: -1,
+        onRepeat: () => {
+          t.x = Math.random() * VW;
+          t.y = Math.random() * VH;
+          t.setAlpha(0.25);
+        },
+      });
+    }
+
+    // Logo
+    const logo = this.add.text(VW / 2, 165, "🧸", { fontSize: "76px" }).setOrigin(0.5);
+    this.tweens.add({
+      targets: logo,
+      y: 175,
+      duration: 1800,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut",
+    });
+
+    this.add.text(VW / 2, 252, "SQUISHY SWAP", {
       fontFamily: "Fraunces, serif",
-      fontSize: "38px",
-      color: "#be185d",
-      stroke: "#fce7f3",
-      strokeThickness: 5,
+      fontSize: "34px",
+      color: WHITE,
+      stroke: hexStr(ACCENT),
+      strokeThickness: 6,
     }).setOrigin(0.5);
 
-    this.add.text(VW / 2, 285, "Trade squishies. Collect them all! ✨", {
+    this.add.text(VW / 2, 290, "trade rare. flex harder. 💜", {
       fontFamily: "Manrope, sans-serif",
-      fontSize: "14px",
-      color: "#9d174d",
+      fontSize: "13px",
+      color: hexStr(ACCENT2),
     }).setOrigin(0.5);
 
-    this.add.text(VW / 2, 320, `📦 ${col.size} / ${SQUISHIES.length} collected`, {
+    // Collection pill
+    const pillGfx = this.add.graphics();
+    roundRect(pillGfx, VW / 2 - 90, 318, 180, 32, 16, SURFACE2, 1, BORDER, 1);
+    this.add.text(VW / 2, 334, `📦  ${col.size} / ${SQUISHIES.length} collected`, {
       fontFamily: "Manrope, sans-serif",
-      fontSize: "14px",
-      color: "#6b7280",
+      fontSize: "13px",
+      color: SUBTEXT,
     }).setOrigin(0.5);
 
-    // Play button
-    this.makeButton(VW / 2, 410, 220, 62, "🎮  PLAY", 0xec4899, 0xbe185d, "#ffffff", () => {
-      this.cameras.main.fadeOut(180, 253, 242, 248);
+    // Play button — vivid purple pill
+    this.makePillButton(VW / 2, 420, 230, 58, "PLAY NOW  ▶", ACCENT, ACCENT2, WHITE, () => {
+      this.cameras.main.fadeOut(180, 13, 13, 26);
       this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("trade"));
     });
 
-    // Collection button
-    this.makeButton(VW / 2, 495, 220, 56, "🎀  COLLECTION", 0xf9a8d4, 0xec4899, "#9d174d", () => {
-      this.cameras.main.fadeOut(180, 253, 242, 248);
+    // Collection button — ghost style
+    this.makeGhostButton(VW / 2, 500, 230, 52, "MY COLLECTION  →", () => {
+      this.cameras.main.fadeOut(180, 13, 13, 26);
       this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("collection"));
     });
 
-    this.cameras.main.fadeIn(280, 253, 242, 248);
+    // Version tag
+    this.add.text(VW / 2, VH - 24, "freegamestore.online", {
+      fontFamily: "Manrope, sans-serif",
+      fontSize: "10px",
+      color: "#2e2e52",
+    }).setOrigin(0.5);
+
+    this.cameras.main.fadeIn(280, 13, 13, 26);
   }
 
-  private makeButton(
+  private makePillButton(
     x: number, y: number, w: number, h: number,
-    label: string, fill: number, stroke: number, textColor: string,
+    label: string, fill: number, _stroke: number, textColor: string,
     onDown: () => void,
   ): void {
-    const btn = this.add.rectangle(x, y, w, h, fill)
-      .setStrokeStyle(3, stroke)
+    const gfx = this.add.graphics();
+    roundRect(gfx, x - w / 2, y - h / 2, w, h, h / 2, fill, 1);
+
+    const hitZone = this.add.rectangle(x, y, w, h, 0x000000, 0)
       .setInteractive({ useHandCursor: true });
+
     this.add.text(x, y, label, {
       fontFamily: "Manrope, sans-serif",
-      fontSize: "20px",
+      fontSize: "18px",
       fontStyle: "bold",
       color: textColor,
     }).setOrigin(0.5);
 
-    btn.on("pointerover", () => this.tweens.add({ targets: btn, scaleX: 1.05, scaleY: 1.05, duration: 80, ease: "Sine.easeOut" }));
-    btn.on("pointerout",  () => this.tweens.add({ targets: btn, scaleX: 1.0,  scaleY: 1.0,  duration: 80, ease: "Sine.easeOut" }));
-    btn.on("pointerdown", onDown);
+    hitZone.on("pointerover", () => {
+      this.tweens.add({ targets: gfx, scaleX: 1.04, scaleY: 1.04, duration: 80 });
+    });
+    hitZone.on("pointerout", () => {
+      this.tweens.add({ targets: gfx, scaleX: 1.0, scaleY: 1.0, duration: 80 });
+    });
+    hitZone.on("pointerdown", onDown);
+  }
+
+  private makeGhostButton(
+    x: number, y: number, w: number, h: number,
+    label: string,
+    onDown: () => void,
+  ): void {
+    const gfx = this.add.graphics();
+    roundRect(gfx, x - w / 2, y - h / 2, w, h, h / 2, SURFACE2, 1, BORDER, 1);
+
+    const hitZone = this.add.rectangle(x, y, w, h, 0x000000, 0)
+      .setInteractive({ useHandCursor: true });
+
+    this.add.text(x, y, label, {
+      fontFamily: "Manrope, sans-serif",
+      fontSize: "15px",
+      fontStyle: "bold",
+      color: hexStr(ACCENT2),
+    }).setOrigin(0.5);
+
+    hitZone.on("pointerover", () => {
+      this.tweens.add({ targets: gfx, scaleX: 1.04, scaleY: 1.04, duration: 80 });
+    });
+    hitZone.on("pointerout", () => {
+      this.tweens.add({ targets: gfx, scaleX: 1.0, scaleY: 1.0, duration: 80 });
+    });
+    hitZone.on("pointerdown", onDown);
   }
 }
 
@@ -232,14 +335,17 @@ class TradeScene extends Phaser.Scene {
   private readonly MAX_ADD = 3;
   private readonly MAX_CP  = 5;
 
-  // UI refs rebuilt each trade
   private speechText!: Phaser.GameObjects.Text;
-  private speechBubble!: Phaser.GameObjects.Rectangle;
+  private speechBubble!: Phaser.GameObjects.Graphics;
   private addBtn!: Phaser.GameObjects.Rectangle;
   private addBtnLabel!: Phaser.GameObjects.Text;
-  private valueText!: Phaser.GameObjects.Text;
-  // Container that holds ALL offered-card objects so we can wipe & rebuild cleanly
   private cardLayer!: Phaser.GameObjects.Layer;
+
+  // Thermometer UI refs
+  private thermoBg!: Phaser.GameObjects.Graphics;
+  private thermoFill!: Phaser.GameObjects.Graphics;
+  private thermoBulb!: Phaser.GameObjects.Graphics;
+  private thermoLabel!: Phaser.GameObjects.Text;
 
   constructor(onScore: (n: number) => void) {
     super("trade");
@@ -256,13 +362,10 @@ class TradeScene extends Phaser.Scene {
     this.buildTrade();
   }
 
-  // Completely rebuild the scene for a new CP/trade
   private buildTrade(): void {
-    // Destroy everything from any previous trade
     this.children.removeAll(true);
     this.tweens.killAll();
 
-    // Pick my squishy & CP
     const myIds = [...this.collection];
     const myId = pick(myIds);
     this.mySquishy = SQUISHIES.find(s => s.id === myId) ?? SQUISHIES[0]!;
@@ -271,77 +374,106 @@ class TradeScene extends Phaser.Scene {
     this.offered = this.generateOffer();
 
     // ── Background ──
-    this.add.rectangle(VW / 2, VH / 2, VW, VH, 0xfdf2f8);
+    this.add.rectangle(VW / 2, VH / 2, VW, VH, BG);
 
-    // ── CP header strip ──
-    this.add.rectangle(VW / 2, 65, VW, 130, this.cp.color, 0.6)
-      .setStrokeStyle(2, 0xfce7f3);
+    // Subtle grid
+    const gridGfx = this.add.graphics();
+    gridGfx.lineStyle(1, 0x141428, 1);
+    for (let x = 0; x < VW; x += 40) { gridGfx.moveTo(x, 0); gridGfx.lineTo(x, VH); }
+    for (let y = 0; y < VH; y += 40) { gridGfx.moveTo(0, y); gridGfx.lineTo(VW, y); }
+    gridGfx.strokePath();
 
-    this.add.text(22, 22, this.cp.emoji, { fontSize: "52px" });
-    this.add.text(84, 26, this.cp.name, {
+    // ── CP header card ──
+    const headerGfx = this.add.graphics();
+    roundRect(headerGfx, 0, 0, VW, 128, 0, SURFACE, 1, this.cp.color, 2);
+
+    // Accent glow strip at top
+    const glowGfx = this.add.graphics();
+    glowGfx.fillStyle(this.cp.color, 0.35);
+    glowGfx.fillRect(0, 0, VW, 4);
+
+    this.add.text(18, 18, this.cp.emoji, { fontSize: "44px" });
+    this.add.text(76, 22, this.cp.name.toUpperCase(), {
       fontFamily: "Fraunces, serif",
-      fontSize: "22px",
-      color: "#1f2937",
+      fontSize: "20px",
+      color: WHITE,
     });
-    this.add.text(84, 56, this.personalityLabel(), {
+    this.add.text(76, 52, this.personalityLabel(), {
       fontFamily: "Manrope, sans-serif",
       fontSize: "12px",
-      color: "#6b7280",
+      color: hexStr(this.cp.color),
     });
-    this.add.text(VW - 14, 26, `${this.cpIndex + 1} / ${this.MAX_CP}`, {
+
+    // Trader counter pill
+    const counterGfx = this.add.graphics();
+    roundRect(counterGfx, VW - 72, 20, 58, 26, 13, SURFACE2, 1, BORDER, 1);
+    this.add.text(VW - 43, 33, `${this.cpIndex + 1} / ${this.MAX_CP}`, {
       fontFamily: "Manrope, sans-serif",
-      fontSize: "13px",
-      color: "#9d174d",
-    }).setOrigin(1, 0);
+      fontSize: "12px",
+      color: SUBTEXT,
+    }).setOrigin(0.5);
 
     // ── Speech bubble ──
-    this.speechBubble = this.add.rectangle(VW / 2, 116, VW - 32, 34, 0xffffff, 0.95)
-      .setStrokeStyle(2, 0xf9a8d4);
-    this.speechText = this.add.text(VW / 2, 116, this.getGreeting(), {
-      fontFamily: "Manrope, sans-serif",
-      fontSize: "13px",
-      color: "#be185d",
-    }).setOrigin(0.5);
+    this.speechBubble = this.add.graphics();
+    this.drawSpeechBubble(this.getGreeting());
+
+    // ── Divider ──
+    const divGfx = this.add.graphics();
+    divGfx.lineStyle(1, BORDER, 1);
+    divGfx.moveTo(20, 148); divGfx.lineTo(VW - 20, 148);
+    divGfx.strokePath();
 
     // ── Section labels ──
-    this.add.text(VW / 2, 152, "YOUR SQUISHY", {
+    this.add.text(20, 158, "YOUR SQUISHY", {
       fontFamily: "Manrope, sans-serif",
       fontSize: "10px",
       fontStyle: "bold",
-      color: "#9ca3af",
-    }).setOrigin(0.5);
+      color: MUTED,
+    });
 
-    this.buildMyCard(VW / 2, 205);
+    this.buildMyCard(VW / 2, 218);
 
-    this.add.text(VW / 2, 265, "⬆️  for  ⬇️", {
+    // Swap arrow
+    this.add.text(VW / 2, 272, "⇅", {
       fontFamily: "Manrope, sans-serif",
-      fontSize: "14px",
-      color: "#be185d",
+      fontSize: "20px",
+      color: hexStr(ACCENT2),
     }).setOrigin(0.5);
 
-    this.add.text(VW / 2, 295, "THEY OFFER", {
+    this.add.text(20, 298, "THEY OFFER", {
       fontFamily: "Manrope, sans-serif",
       fontSize: "10px",
       fontStyle: "bold",
-      color: "#9ca3af",
-    }).setOrigin(0.5);
+      color: MUTED,
+    });
 
-    // Card layer — a Layer lets us add/remove offered cards without touching anything else
+    // Card layer for offered squishies
     this.cardLayer = this.add.layer();
     this.buildOfferedCards();
 
-    // Value text
-    this.valueText = this.add.text(VW / 2, 504, "", {
-      fontFamily: "Manrope, sans-serif",
-      fontSize: "12px",
-      color: "#6b7280",
-    }).setOrigin(0.5);
-    this.refreshValueText();
+    // ── Thermometer ──
+    this.buildThermometer();
 
-    // Buttons
+    // ── Buttons ──
     this.buildButtons();
 
-    this.cameras.main.fadeIn(220, 253, 242, 248);
+    this.cameras.main.fadeIn(200, 13, 13, 26);
+  }
+
+  // ── Speech bubble (drawn with graphics for dark style) ──────────────────────
+  private drawSpeechBubble(text: string): void {
+    this.speechBubble.clear();
+    roundRect(this.speechBubble, 16, 100, VW - 32, 36, 10, SURFACE2, 1, BORDER, 1);
+
+    if (!this.speechText) {
+      this.speechText = this.add.text(VW / 2, 118, text, {
+        fontFamily: "Manrope, sans-serif",
+        fontSize: "13px",
+        color: hexStr(ACCENT2),
+      }).setOrigin(0.5);
+    } else {
+      this.speechText.setText(text);
+    }
   }
 
   // ── My squishy card ──────────────────────────────────────────────────────────
@@ -349,27 +481,28 @@ class TradeScene extends Phaser.Scene {
     const sq = this.mySquishy;
     const rc = RARITY_COLORS[sq.rarity];
 
-    const card = this.add.rectangle(cx, cy, 140, 80, 0xffffff)
-      .setStrokeStyle(3, rc);
-    this.add.text(cx, cy - 16, sq.emoji, { fontSize: "28px" }).setOrigin(0.5);
+    const cardGfx = this.add.graphics();
+    roundRect(cardGfx, cx - 72, cy - 44, 144, 88, 12, SURFACE, 1, rc, 2);
+
+    this.add.text(cx, cy - 18, sq.emoji, { fontSize: "28px" }).setOrigin(0.5);
     this.add.text(cx, cy + 16, sq.name, {
       fontFamily: "Manrope, sans-serif",
-      fontSize: "11px",
+      fontSize: "12px",
       fontStyle: "bold",
-      color: "#1f2937",
+      color: WHITE,
     }).setOrigin(0.5);
-    this.add.text(cx, cy + 32, sq.rarity, {
+    this.add.text(cx, cy + 32, sq.rarity.toUpperCase(), {
       fontFamily: "Manrope, sans-serif",
-      fontSize: "10px",
+      fontSize: "9px",
+      fontStyle: "bold",
       color: hexStr(rc),
     }).setOrigin(0.5);
 
-    // Pulse for high rarity
     if (rarityRank(sq.rarity) >= 3) {
       this.tweens.add({
-        targets: card,
-        strokeAlpha: 0.3,
-        duration: 700,
+        targets: cardGfx,
+        alpha: 0.7,
+        duration: 800,
         yoyo: true,
         repeat: -1,
         ease: "Sine.easeInOut",
@@ -379,127 +512,209 @@ class TradeScene extends Phaser.Scene {
 
   // ── Offered cards ─────────────────────────────────────────────────────────────
   private buildOfferedCards(): void {
-    // Wipe only the card layer
     this.cardLayer.removeAll(true);
 
     const count  = this.offered.length;
     const gap    = 10;
-    const cardW  = Math.min(105, (VW - 32 - gap * (count - 1)) / count);
+    const cardW  = Math.min(108, (VW - 32 - gap * (count - 1)) / count);
     const cardH  = 100;
     const totalW = count * cardW + (count - 1) * gap;
     const startX = (VW - totalW) / 2 + cardW / 2;
-    const cy     = 405;
+    const cy     = 408;
 
     this.offered.forEach((sq, i) => {
       const cx = startX + i * (cardW + gap);
       const rc = RARITY_COLORS[sq.rarity];
 
-      const card = this.add.rectangle(cx, cy, cardW, cardH, 0xffffff)
-        .setStrokeStyle(2, rc);
+      const cardGfx = this.add.graphics();
+      roundRect(cardGfx, cx - cardW / 2, cy - cardH / 2, cardW, cardH, 10, SURFACE, 1, rc, 2);
+
       const emojiT = this.add.text(cx, cy - 22, sq.emoji, { fontSize: "24px" }).setOrigin(0.5);
       const nameT  = this.add.text(cx, cy + 16, sq.name, {
         fontFamily: "Manrope, sans-serif",
         fontSize: "9px",
         fontStyle: "bold",
-        color: "#1f2937",
+        color: WHITE,
         wordWrap: { width: cardW - 8 },
         align: "center",
       }).setOrigin(0.5);
-      const rarT = this.add.text(cx, cy + 34, sq.rarity, {
+      const rarT = this.add.text(cx, cy + 34, sq.rarity.toUpperCase(), {
         fontFamily: "Manrope, sans-serif",
         fontSize: "8px",
+        fontStyle: "bold",
         color: hexStr(rc),
       }).setOrigin(0.5);
 
-      // Add all to the layer so they're isolated
-      this.cardLayer.add([card, emojiT, nameT, rarT]);
+      this.cardLayer.add([cardGfx, emojiT, nameT, rarT]);
 
-      // Pop-in animation
-      const targets = [card, emojiT, nameT, rarT];
+      // Pop-in
+      const targets = [cardGfx, emojiT, nameT, rarT];
       targets.forEach(t => t.setScale(0.01));
       this.tweens.add({
         targets,
-        scaleX: 1,
-        scaleY: 1,
-        duration: 260,
+        scaleX: 1, scaleY: 1,
+        duration: 280,
         delay: i * 70,
         ease: "Back.easeOut",
       });
 
-      // Sparkle badge for rares+
+      // Floating sparkle badge for rares
       if (rarityRank(sq.rarity) >= 2) {
-        const badge = this.add.text(cx + cardW / 2 - 6, cy - cardH / 2 + 2, "✨", { fontSize: "11px" });
+        const badge = this.add.text(cx + cardW / 2 - 8, cy - cardH / 2 + 2, "✦", {
+          fontSize: "11px",
+          color: hexStr(rc),
+        });
         this.cardLayer.add(badge);
         this.tweens.add({
           targets: badge,
-          y: badge.y - 12,
+          y: badge.y - 14,
           alpha: 0,
-          duration: 1000,
+          duration: 1100,
           repeat: -1,
-          delay: i * 150,
+          delay: i * 180,
           ease: "Sine.easeIn",
-          onRepeat: () => {
-            badge.y = cy - cardH / 2 + 2;
-            badge.setAlpha(1);
-          },
+          onRepeat: () => { badge.y = cy - cardH / 2 + 2; badge.setAlpha(1); },
         });
       }
     });
   }
 
-  // ── Buttons ───────────────────────────────────────────────────────────────────
-  private buildButtons(): void {
-    const by = 592;
-    const bh = 62;
-    const bw = 118;
+  // ── Thermometer ───────────────────────────────────────────────────────────────
+  private buildThermometer(): void {
+    // Layout: horizontal bar from left to right
+    // Left label "BAD DEAL" ←————————[fill]————→ "GREAT DEAL" right
+    const barX  = 52;          // left edge of bar
+    const barY  = 516;         // vertical center
+    const barW  = VW - 104;    // width of bar track
+    const barH  = 14;
+    const bulbR = 11;
 
-    // Accept ✅
-    const acceptBg = this.add.rectangle(62, by, bw, bh, 0x4ade80)
-      .setStrokeStyle(3, 0x16a34a)
-      .setInteractive({ useHandCursor: true });
-    this.add.text(62, by - 12, "✅", { fontSize: "22px" }).setOrigin(0.5);
-    this.add.text(62, by + 16, "ACCEPT", {
+    // Track background (rounded pill)
+    this.thermoBg = this.add.graphics();
+    this.thermoBg.fillStyle(SURFACE2, 1);
+    this.thermoBg.fillRoundedRect(barX, barY - barH / 2, barW, barH, barH / 2);
+    this.thermoBg.lineStyle(1, BORDER, 1);
+    this.thermoBg.strokeRoundedRect(barX, barY - barH / 2, barW, barH, barH / 2);
+
+    // Fill (will be updated)
+    this.thermoFill = this.add.graphics();
+
+    // Bulb (left end circle)
+    this.thermoBulb = this.add.graphics();
+
+    // Labels
+    this.add.text(barX - 4, barY + 12, "😬", { fontSize: "13px" }).setOrigin(0.5);
+    this.add.text(barX + barW + 4, barY + 12, "🔥", { fontSize: "13px" }).setOrigin(0.5);
+
+    // Deal quality label
+    this.thermoLabel = this.add.text(VW / 2, barY - 18, "", {
       fontFamily: "Manrope, sans-serif",
       fontSize: "11px",
       fontStyle: "bold",
-      color: "#14532d",
+      color: SUBTEXT,
     }).setOrigin(0.5);
 
-    // Add more ➕
-    this.addBtn = this.add.rectangle(VW / 2, by, bw, bh, 0xfbbf24)
-      .setStrokeStyle(3, 0xd97706)
+    this.refreshThermometer(barX, barY, barW, barH, bulbR);
+  }
+
+  private refreshThermometer(
+    barX: number, barY: number, barW: number, barH: number, bulbR: number,
+  ): void {
+    const myVal  = this.mySquishy.value;
+    const offVal = this.offered.reduce((s, q) => s + q.value, 0);
+    const ratio  = offVal / Math.max(myVal, 1);
+
+    // Map ratio 0.4–2.0 → 0–1 fill
+    const t = Phaser.Math.Clamp((ratio - 0.4) / 1.6, 0, 1);
+
+    // Color gradient: red → amber → green
+    let fillColor: number;
+    let labelText: string;
+    if (t < 0.33) {
+      fillColor = NEON_R;
+      labelText = t < 0.15 ? "😬 terrible deal" : "not great...";
+    } else if (t < 0.55) {
+      fillColor = NEON_Y;
+      labelText = "kinda fair 🤔";
+    } else if (t < 0.75) {
+      fillColor = 0x34d399;
+      labelText = "solid deal 👍";
+    } else {
+      fillColor = NEON_G;
+      labelText = t > 0.9 ? "insane deal!! 🔥" : "great deal ✨";
+    }
+
+    const fillW = Math.max(barH, t * barW);
+
+    this.thermoFill.clear();
+    this.thermoFill.fillStyle(fillColor, 1);
+    this.thermoFill.fillRoundedRect(barX, barY - barH / 2, fillW, barH, barH / 2);
+
+    // Bulb at left end
+    this.thermoBulb.clear();
+    this.thermoBulb.fillStyle(fillColor, 1);
+    this.thermoBulb.fillCircle(barX, barY, bulbR);
+
+    this.thermoLabel.setText(labelText);
+    this.thermoLabel.setColor(hexStr(fillColor));
+  }
+
+  // ── Buttons ───────────────────────────────────────────────────────────────────
+  private buildButtons(): void {
+    const by  = 596;
+    const bh  = 60;
+    const bw  = 118;
+
+    // Accept
+    const acceptGfx = this.add.graphics();
+    roundRect(acceptGfx, 10, by - bh / 2, bw, bh, 14, 0x14532d, 1, NEON_G, 2);
+    const acceptHit = this.add.rectangle(10 + bw / 2, by, bw, bh, 0, 0)
       .setInteractive({ useHandCursor: true });
-    this.add.text(VW / 2, by - 12, "➕", { fontSize: "22px" }).setOrigin(0.5);
+    this.add.text(10 + bw / 2, by - 10, "✅", { fontSize: "20px" }).setOrigin(0.5);
+    this.add.text(10 + bw / 2, by + 16, "ACCEPT", {
+      fontFamily: "Manrope, sans-serif",
+      fontSize: "11px",
+      fontStyle: "bold",
+      color: hexStr(NEON_G),
+    }).setOrigin(0.5);
+
+    // Add more
+    const addGfx = this.add.graphics();
+    roundRect(addGfx, VW / 2 - bw / 2, by - bh / 2, bw, bh, 14, 0x451a03, 1, NEON_Y, 2);
+    this.addBtn = this.add.rectangle(VW / 2, by, bw, bh, 0, 0)
+      .setInteractive({ useHandCursor: true });
+    this.add.text(VW / 2, by - 10, "➕", { fontSize: "20px" }).setOrigin(0.5);
     this.addBtnLabel = this.add.text(VW / 2, by + 16, "ADD MORE", {
       fontFamily: "Manrope, sans-serif",
       fontSize: "11px",
       fontStyle: "bold",
-      color: "#78350f",
+      color: hexStr(NEON_Y),
     }).setOrigin(0.5);
 
-    // Reject ❌
-    const rejectBg = this.add.rectangle(VW - 62, by, bw, bh, 0xf87171)
-      .setStrokeStyle(3, 0xdc2626)
+    // Reject
+    const rejectGfx = this.add.graphics();
+    roundRect(rejectGfx, VW - 10 - bw, by - bh / 2, bw, bh, 14, 0x4c0519, 1, NEON_R, 2);
+    const rejectHit = this.add.rectangle(VW - 10 - bw / 2, by, bw, bh, 0, 0)
       .setInteractive({ useHandCursor: true });
-    this.add.text(VW - 62, by - 12, "❌", { fontSize: "22px" }).setOrigin(0.5);
-    this.add.text(VW - 62, by + 16, "REJECT", {
+    this.add.text(VW - 10 - bw / 2, by - 10, "❌", { fontSize: "20px" }).setOrigin(0.5);
+    this.add.text(VW - 10 - bw / 2, by + 16, "REJECT", {
       fontFamily: "Manrope, sans-serif",
       fontSize: "11px",
       fontStyle: "bold",
-      color: "#7f1d1d",
+      color: hexStr(NEON_R),
     }).setOrigin(0.5);
 
-    this.refreshAddBtn();
+    this.refreshAddBtn(addGfx);
 
-    // Hover scale
-    for (const btn of [acceptBg, this.addBtn, rejectBg]) {
-      btn.on("pointerover", () => this.tweens.add({ targets: btn, scaleX: 1.06, scaleY: 1.06, duration: 70 }));
-      btn.on("pointerout",  () => this.tweens.add({ targets: btn, scaleX: 1.0,  scaleY: 1.0,  duration: 70 }));
+    // Hover scale on hit zones
+    for (const [hit, gfx] of [[acceptHit, acceptGfx], [this.addBtn, addGfx], [rejectHit, rejectGfx]] as [Phaser.GameObjects.Rectangle, Phaser.GameObjects.Graphics][]) {
+      hit.on("pointerover", () => this.tweens.add({ targets: gfx, scaleX: 1.05, scaleY: 1.05, duration: 70 }));
+      hit.on("pointerout",  () => this.tweens.add({ targets: gfx, scaleX: 1.0,  scaleY: 1.0,  duration: 70 }));
     }
 
-    acceptBg.on("pointerdown", () => this.doAccept());
+    acceptHit.on("pointerdown", () => this.doAccept());
     this.addBtn.on("pointerdown", () => this.doAddMore());
-    rejectBg.on("pointerdown", () => this.doReject());
+    rejectHit.on("pointerdown", () => this.doReject());
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -522,52 +737,53 @@ class TradeScene extends Phaser.Scene {
   }
 
   private personalityLabel(): string {
-    return this.cp.personality === "generous" ? "💖 Generous trader"
-         : this.cp.personality === "stingy"   ? "😒 Stingy trader"
-         :                                       "🤝 Fair trader";
+    return this.cp.personality === "generous" ? "💚 generous trader"
+         : this.cp.personality === "stingy"   ? "💀 stingy trader"
+         :                                       "⚖️ fair trader";
   }
 
   private getGreeting(): string {
     const map: Record<string, string[]> = {
-      generous: ["Hi! I'd love to trade! 💕", "I have something great! 🌟", "Let's make a deal! 🎉"],
-      fair:     ["Hey! Wanna trade? 😊", "I think this is fair! 🤝", "Deal? 🌸"],
-      stingy:   ["Hmm... maybe? 🤔", "I guess I can trade... 😒", "Take it or leave it! 😤"],
+      generous: ["yo here's something good for u 💜", "i got you fr fr 🌟", "this deal slaps ngl 🎉"],
+      fair:     ["wanna trade? 🤝", "seems fair to me tbh", "deal? 🌸"],
+      stingy:   ["take it or leave it 🙄", "this is literally my best offer", "hmm... maybe 🤔"],
     };
     return pick(map[this.cp.personality] ?? map["fair"]!);
   }
 
   private setSpeech(txt: string): void {
     this.speechText.setText(txt);
-    // Gentle pop on the bubble only — no scale conflict with other tweens
     this.tweens.killTweensOf(this.speechBubble);
     this.speechBubble.setScale(1);
     this.tweens.add({
       targets: this.speechBubble,
-      scaleX: 1.04,
-      scaleY: 1.12,
-      duration: 100,
+      scaleX: 1.03, scaleY: 1.1,
+      duration: 90,
       yoyo: true,
       ease: "Sine.easeOut",
     });
   }
 
-  private refreshValueText(): void {
-    const myVal  = this.mySquishy.value;
-    const offVal = this.offered.reduce((s, q) => s + q.value, 0);
-    const diff   = offVal - myVal;
-    const sign   = diff >= 0 ? "+" : "";
-    this.valueText.setText(`Offer: ${offVal} pts  (yours: ${myVal} pts  ${sign}${diff})`);
-    this.valueText.setColor(diff >= 0 ? "#16a34a" : "#dc2626");
+  private refreshAddBtn(gfx?: Phaser.GameObjects.Graphics): void {
+    const maxed = this.addCount >= this.MAX_ADD;
+    if (gfx) {
+      gfx.clear();
+      roundRect(gfx, VW / 2 - 59, 566, 118, 60, 14,
+        maxed ? SURFACE2 : 0x451a03, 1,
+        maxed ? BORDER : NEON_Y, 2,
+      );
+    }
+    this.addBtnLabel.setColor(maxed ? MUTED : hexStr(NEON_Y));
+    if (maxed) this.addBtn.removeInteractive();
   }
 
-  private refreshAddBtn(): void {
-    const maxed = this.addCount >= this.MAX_ADD;
-    this.addBtn.setFillStyle(maxed ? 0xd1d5db : 0xfbbf24);
-    this.addBtn.setStrokeStyle(3, maxed ? 0x9ca3af : 0xd97706);
-    this.addBtnLabel.setColor(maxed ? "#9ca3af" : "#78350f");
-    if (maxed) {
-      this.addBtn.removeInteractive();
-    }
+  private updateThermo(): void {
+    const barX = 52;
+    const barY = 516;
+    const barW = VW - 104;
+    const barH = 14;
+    const bulbR = 11;
+    this.refreshThermometer(barX, barY, barW, barH, bulbR);
   }
 
   // ── Actions ───────────────────────────────────────────────────────────────────
@@ -589,7 +805,7 @@ class TradeScene extends Phaser.Scene {
     saveCollection(this.collection);
     this.onScore(this.collection.size);
 
-    this.cameras.main.fadeOut(180, 253, 242, 248);
+    this.cameras.main.fadeOut(180, 13, 13, 26);
     this.cameras.main.once("camerafadeoutcomplete", () => {
       this.scene.start("result", {
         given: this.mySquishy,
@@ -605,9 +821,9 @@ class TradeScene extends Phaser.Scene {
     this.addCount++;
 
     const map: Record<string, string[]> = {
-      generous: ["Okay! One more! 🎁", "Sure, take this too! 💖", "Here you go! ✨"],
-      fair:     ["Hmm… I could add one! 🤔", "Fine, one more! 😊", "Okay, deal? 🌸"],
-      stingy:   ["Ugh, fine! 😤", "This better be worth it! 😒", "Hard bargain! 😑"],
+      generous: ["ok fine, one more 🎁", "here take this too 💖", "ur lucky i like u ✨"],
+      fair:     ["hmm ok one more 🤔", "fine, deal? 😊", "alright alright 🌸"],
+      stingy:   ["ugh FINE 😤", "this better be worth it 😒", "u drive a hard bargain 😑"],
     };
     this.setSpeech(pick(map[this.cp.personality] ?? map["fair"]!));
 
@@ -615,36 +831,32 @@ class TradeScene extends Phaser.Scene {
     this.offered.push(weightedRandomSquishy(this.mySquishy.value * 0.8, used));
 
     this.buildOfferedCards();
-    this.refreshValueText();
+    this.updateThermo();
     this.refreshAddBtn();
   }
 
   private doReject(): void {
     const map: Record<string, string[]> = {
-      generous: ["Oh no! 😢 Maybe someone else?", "Fine... 💔", "I thought we were friends! 😭"],
-      fair:     ["Your loss! 🤷", "Okay, moving on! 😊", "Fine! Maybe someone else! 😤"],
-      stingy:   ["FINE! Didn't want to anyway! 😤", "Whatever! 😒", "Hmph! 😤"],
+      generous: ["nooo 😢 maybe someone else?", "fine... 💔", "i thought we were friends!! 😭"],
+      fair:     ["your loss 🤷", "ok moving on 😊", "fine! maybe someone else! 😤"],
+      stingy:   ["FINE. didn't want to anyway 😤", "whatever 😒", "hmph 😤"],
     };
     this.setSpeech(pick(map[this.cp.personality] ?? map["fair"]!));
 
-    // Disable all buttons to prevent double-tap during delay
     this.input.enabled = false;
-
     this.time.delayedCall(700, () => {
       this.cpIndex++;
       if (this.cpIndex >= this.MAX_CP) {
-        this.cameras.main.fadeOut(180, 253, 242, 248);
+        this.cameras.main.fadeOut(180, 13, 13, 26);
         this.cameras.main.once("camerafadeoutcomplete", () => {
           this.scene.start("result", {
-            given: null,
-            received: [],
-            score: 0,
+            given: null, received: [], score: 0,
             collectionSize: this.collection.size,
           } satisfies ResultData);
         });
         return;
       }
-      this.cameras.main.fadeOut(180, 253, 242, 248);
+      this.cameras.main.fadeOut(180, 13, 13, 26);
       this.cameras.main.once("camerafadeoutcomplete", () => {
         this.input.enabled = true;
         this.buildTrade();
@@ -665,158 +877,195 @@ class ResultScene extends Phaser.Scene {
   create(data: ResultData): void {
     this.onScore(data.collectionSize);
 
-    this.add.rectangle(VW / 2, VH / 2, VW, VH, 0xfdf2f8);
+    this.add.rectangle(VW / 2, VH / 2, VW, VH, BG);
+
+    // Grid bg
+    const gridGfx = this.add.graphics();
+    gridGfx.lineStyle(1, 0x141428, 1);
+    for (let x = 0; x < VW; x += 40) { gridGfx.moveTo(x, 0); gridGfx.lineTo(x, VH); }
+    for (let y = 0; y < VH; y += 40) { gridGfx.moveTo(0, y); gridGfx.lineTo(VW, y); }
+    gridGfx.strokePath();
 
     if (!data.given) {
-      // No trade was made
       this.add.text(VW / 2, VH / 2 - 80, "😔", { fontSize: "72px" }).setOrigin(0.5);
-      this.add.text(VW / 2, VH / 2, "No trade made!", {
+      this.add.text(VW / 2, VH / 2, "no trade made", {
         fontFamily: "Fraunces, serif",
         fontSize: "30px",
-        color: "#be185d",
+        color: WHITE,
       }).setOrigin(0.5);
-      this.add.text(VW / 2, VH / 2 + 50, "Better luck next time!", {
+      this.add.text(VW / 2, VH / 2 + 48, "better luck next time 🤞", {
         fontFamily: "Manrope, sans-serif",
-        fontSize: "16px",
-        color: "#6b7280",
+        fontSize: "15px",
+        color: SUBTEXT,
       }).setOrigin(0.5);
     } else {
-      this.spawnConfetti();
+      this.spawnParticles();
 
-      this.add.text(VW / 2, 72, "🎉 TRADE COMPLETE! 🎉", {
+      // Header
+      const { label, color } = this.getDealLabel(data.score);
+      const headerGfx = this.add.graphics();
+      roundRect(headerGfx, 0, 0, VW, 110, 0, SURFACE, 1, color, 2);
+      const glowGfx = this.add.graphics();
+      glowGfx.fillStyle(color, 0.3);
+      glowGfx.fillRect(0, 0, VW, 4);
+
+      this.add.text(VW / 2, 38, "TRADE COMPLETE", {
         fontFamily: "Fraunces, serif",
         fontSize: "26px",
-        color: "#be185d",
-        stroke: "#fce7f3",
+        color: WHITE,
+        stroke: hexStr(color),
         strokeThickness: 4,
       }).setOrigin(0.5);
 
-      // Given
-      this.add.text(VW / 2, 128, "You gave:", {
+      this.add.text(VW / 2, 78, label, {
         fontFamily: "Manrope, sans-serif",
-        fontSize: "13px",
-        color: "#9ca3af",
-      }).setOrigin(0.5);
-      this.add.text(VW / 2, 158, `${data.given.emoji}  ${data.given.name}`, {
-        fontFamily: "Manrope, sans-serif",
-        fontSize: "20px",
+        fontSize: "16px",
         fontStyle: "bold",
-        color: "#1f2937",
+        color: hexStr(color),
       }).setOrigin(0.5);
 
-      this.add.text(VW / 2, 188, "⬇️", { fontSize: "18px" }).setOrigin(0.5);
-
-      // Received
-      this.add.text(VW / 2, 216, "You received:", {
+      // Given card
+      this.add.text(20, 128, "YOU GAVE", {
         fontFamily: "Manrope, sans-serif",
-        fontSize: "13px",
-        color: "#9ca3af",
-      }).setOrigin(0.5);
-
-      const recStr = data.received.map(s => `${s.emoji} ${s.name}`).join("  +  ");
-      this.add.text(VW / 2, 248, recStr, {
-        fontFamily: "Manrope, sans-serif",
-        fontSize: "15px",
+        fontSize: "10px",
         fontStyle: "bold",
-        color: "#1f2937",
-        wordWrap: { width: VW - 40 },
-        align: "center",
+        color: MUTED,
+      });
+      this.buildResultCard(VW / 2, 190, data.given);
+
+      // Arrow
+      this.add.text(VW / 2, 248, "⬇", {
+        fontFamily: "Manrope, sans-serif",
+        fontSize: "22px",
+        color: hexStr(ACCENT2),
       }).setOrigin(0.5);
 
-      // Score panel
-      const { label, emoji: scoreEmoji, color } = this.tradeLabel(data.score);
-      const panel = this.add.rectangle(VW / 2, 360, VW - 48, 110, color, 0.12)
-        .setStrokeStyle(3, color);
-      this.tweens.add({ targets: panel, scaleX: 1.02, scaleY: 1.02, duration: 600, yoyo: true, repeat: -1 });
+      // Received cards
+      this.add.text(20, 268, "YOU GOT", {
+        fontFamily: "Manrope, sans-serif",
+        fontSize: "10px",
+        fontStyle: "bold",
+        color: MUTED,
+      });
+      const count = data.received.length;
+      const gap = 12;
+      const cardW = Math.min(130, (VW - 32 - gap * (count - 1)) / count);
+      const totalW = count * cardW + (count - 1) * gap;
+      const startX = (VW - totalW) / 2 + cardW / 2;
+      data.received.forEach((sq, i) => {
+        this.buildResultCard(startX + i * (cardW + gap), 340, sq, cardW);
+      });
 
-      this.add.text(VW / 2, 335, `${scoreEmoji}  ${label}`, {
+      // Score badge
+      const scoreBadgeGfx = this.add.graphics();
+      roundRect(scoreBadgeGfx, VW / 2 - 100, 430, 200, 64, 14, SURFACE2, 1, color, 2);
+      this.add.text(VW / 2, 455, `${data.score}`, {
         fontFamily: "Fraunces, serif",
-        fontSize: "24px",
-        color: hexStr(color),
-      }).setOrigin(0.5);
-      this.add.text(VW / 2, 375, `${data.score} / 100`, {
-        fontFamily: "Manrope, sans-serif",
         fontSize: "32px",
-        fontStyle: "bold",
         color: hexStr(color),
       }).setOrigin(0.5);
-      this.add.text(VW / 2, 410, this.tradeMessage(data.score), {
+      this.add.text(VW / 2, 484, "DEAL SCORE", {
         fontFamily: "Manrope, sans-serif",
-        fontSize: "13px",
-        color: "#6b7280",
+        fontSize: "10px",
+        fontStyle: "bold",
+        color: MUTED,
       }).setOrigin(0.5);
 
       // Collection count
-      this.add.text(VW / 2, 460, `📦 Collection: ${data.collectionSize} / ${SQUISHIES.length}`, {
+      this.add.text(VW / 2, 518, `📦  ${data.collectionSize} / ${SQUISHIES.length} in your collection`, {
         fontFamily: "Manrope, sans-serif",
-        fontSize: "14px",
-        color: "#9d174d",
+        fontSize: "13px",
+        color: SUBTEXT,
       }).setOrigin(0.5);
     }
 
     // Buttons
-    this.makeButton(VW / 2 - 75, VH - 80, "🔄  Trade Again", 0xec4899, 0xbe185d, "#fff", () => {
-      this.cameras.main.fadeOut(180, 253, 242, 248);
+    const btnY = VH - 72;
+
+    const playAgainGfx = this.add.graphics();
+    roundRect(playAgainGfx, VW / 2 - 110, btnY - 26, 220, 52, 26, ACCENT, 1);
+    const playHit = this.add.rectangle(VW / 2, btnY, 220, 52, 0, 0)
+      .setInteractive({ useHandCursor: true });
+    this.add.text(VW / 2, btnY, "TRADE AGAIN  ▶", {
+      fontFamily: "Manrope, sans-serif",
+      fontSize: "16px",
+      fontStyle: "bold",
+      color: WHITE,
+    }).setOrigin(0.5);
+    playHit.on("pointerdown", () => {
+      this.cameras.main.fadeOut(180, 13, 13, 26);
       this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("trade"));
     });
-    this.makeButton(VW / 2 + 75, VH - 80, "🎀  Collection", 0xf9a8d4, 0xec4899, "#9d174d", () => {
-      this.cameras.main.fadeOut(180, 253, 242, 248);
-      this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("collection"));
-    });
 
-    this.cameras.main.fadeIn(280, 253, 242, 248);
-  }
-
-  private makeButton(
-    x: number, y: number, label: string,
-    fill: number, stroke: number, textColor: string,
-    onDown: () => void,
-  ): void {
-    const btn = this.add.rectangle(x, y, 138, 54, fill)
-      .setStrokeStyle(3, stroke)
+    const menuGfx = this.add.graphics();
+    roundRect(menuGfx, VW / 2 - 60, btnY + 36, 120, 36, 18, SURFACE2, 1, BORDER, 1);
+    const menuHit = this.add.rectangle(VW / 2, btnY + 54, 120, 36, 0, 0)
       .setInteractive({ useHandCursor: true });
-    this.add.text(x, y, label, {
+    this.add.text(VW / 2, btnY + 54, "← MENU", {
       fontFamily: "Manrope, sans-serif",
       fontSize: "13px",
-      fontStyle: "bold",
-      color: textColor,
+      color: SUBTEXT,
     }).setOrigin(0.5);
-    btn.on("pointerover", () => this.tweens.add({ targets: btn, scaleX: 1.06, scaleY: 1.06, duration: 70 }));
-    btn.on("pointerout",  () => this.tweens.add({ targets: btn, scaleX: 1.0,  scaleY: 1.0,  duration: 70 }));
-    btn.on("pointerdown", onDown);
+    menuHit.on("pointerdown", () => {
+      this.cameras.main.fadeOut(180, 13, 13, 26);
+      this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("menu"));
+    });
+
+    for (const [hit, gfx] of [[playHit, playAgainGfx], [menuHit, menuGfx]] as [Phaser.GameObjects.Rectangle, Phaser.GameObjects.Graphics][]) {
+      hit.on("pointerover", () => this.tweens.add({ targets: gfx, scaleX: 1.05, scaleY: 1.05, duration: 70 }));
+      hit.on("pointerout",  () => this.tweens.add({ targets: gfx, scaleX: 1.0,  scaleY: 1.0,  duration: 70 }));
+    }
+
+    this.cameras.main.fadeIn(220, 13, 13, 26);
   }
 
-  private tradeLabel(score: number): { label: string; emoji: string; color: number } {
-    if (score >= 85) return { label: "AMAZING TRADE!",     emoji: "🔥", color: 0xf472b6 };
-    if (score >= 70) return { label: "GREAT TRADE!",       emoji: "💖", color: 0x4ade80 };
-    if (score >= 50) return { label: "FAIR TRADE",         emoji: "😊", color: 0x60a5fa };
-    if (score >= 30) return { label: "NOT THE BEST...",    emoji: "😬", color: 0xfbbf24 };
-    return              { label: "TERRIBLE TRADE!",    emoji: "💀", color: 0xf87171 };
+  private buildResultCard(cx: number, cy: number, sq: Squishy, w = 130): void {
+    const h = 80;
+    const rc = RARITY_COLORS[sq.rarity];
+    const cardGfx = this.add.graphics();
+    roundRect(cardGfx, cx - w / 2, cy - h / 2, w, h, 10, SURFACE, 1, rc, 2);
+    this.add.text(cx, cy - 14, sq.emoji, { fontSize: "24px" }).setOrigin(0.5);
+    this.add.text(cx, cy + 16, sq.name, {
+      fontFamily: "Manrope, sans-serif",
+      fontSize: "10px",
+      fontStyle: "bold",
+      color: WHITE,
+      wordWrap: { width: w - 10 },
+      align: "center",
+    }).setOrigin(0.5);
+    this.add.text(cx, cy + 32, sq.rarity.toUpperCase(), {
+      fontFamily: "Manrope, sans-serif",
+      fontSize: "8px",
+      fontStyle: "bold",
+      color: hexStr(rc),
+    }).setOrigin(0.5);
   }
 
-  private tradeMessage(score: number): string {
-    if (score >= 85) return "You got way more than you gave! 🎉";
-    if (score >= 70) return "Nice deal — you came out ahead! ✨";
-    if (score >= 50) return "Pretty even trade. Not bad! 😊";
-    if (score >= 30) return "You gave more than you got... 😬";
-    return                  "Ouch. That was a rough deal! 💀";
+  private getDealLabel(score: number): { label: string; color: number } {
+    if (score >= 90) return { label: "🔥 INSANE DEAL!!",    color: NEON_G };
+    if (score >= 70) return { label: "✨ great deal!",       color: 0x34d399 };
+    if (score >= 50) return { label: "👍 solid deal",        color: NEON_Y };
+    if (score >= 30) return { label: "😬 kinda bad deal",    color: 0xf97316 };
+    return              { label: "💀 terrible deal lol",   color: NEON_R };
   }
 
-  private spawnConfetti(): void {
-    const colors = [0xf472b6, 0xfbbf24, 0x4ade80, 0x60a5fa, 0xc084fc, 0xfde68a];
-    for (let i = 0; i < 28; i++) {
+  private spawnParticles(): void {
+    const symbols = ["✦", "◆", "✧", "▸", "◇", "★"];
+    const colors  = [ACCENT, ACCENT2, NEON_G, NEON_Y, 0x60a5fa];
+    for (let i = 0; i < 22; i++) {
       const x = Math.random() * VW;
-      const c = this.add.rectangle(x, -20, 8 + Math.random() * 8, 8 + Math.random() * 8,
-        colors[Math.floor(Math.random() * colors.length)] ?? 0xf472b6);
+      const t = this.add.text(x, VH + 10, pick(symbols), {
+        fontSize: `${10 + Math.random() * 14}px`,
+        color: hexStr(pick(colors)),
+      }).setAlpha(0.9);
       this.tweens.add({
-        targets: c,
-        y: VH + 30,
-        x: x + (Math.random() - 0.5) * 120,
-        angle: Math.random() * 360,
-        duration: 1800 + Math.random() * 1200,
-        delay: Math.random() * 800,
-        ease: "Sine.easeIn",
-        onComplete: () => c.destroy(),
+        targets: t,
+        y: -20,
+        x: x + (Math.random() - 0.5) * 80,
+        alpha: 0,
+        duration: 1800 + Math.random() * 1400,
+        delay: Math.random() * 1200,
+        ease: "Sine.easeOut",
       });
     }
   }
@@ -835,93 +1084,108 @@ class CollectionScene extends Phaser.Scene {
     const col = loadCollection();
     this.onScore(col.size);
 
-    this.add.rectangle(VW / 2, VH / 2, VW, VH, 0xfdf2f8);
+    this.add.rectangle(VW / 2, VH / 2, VW, VH, BG);
 
-    this.add.text(VW / 2, 36, "🎀  My Collection", {
+    // Grid bg
+    const gridGfx = this.add.graphics();
+    gridGfx.lineStyle(1, 0x141428, 1);
+    for (let x = 0; x < VW; x += 40) { gridGfx.moveTo(x, 0); gridGfx.lineTo(x, VH); }
+    for (let y = 0; y < VH; y += 40) { gridGfx.moveTo(0, y); gridGfx.lineTo(VW, y); }
+    gridGfx.strokePath();
+
+    // Header
+    const headerGfx = this.add.graphics();
+    roundRect(headerGfx, 0, 0, VW, 80, 0, SURFACE, 1, BORDER, 1);
+    const glowGfx = this.add.graphics();
+    glowGfx.fillStyle(ACCENT, 0.3);
+    glowGfx.fillRect(0, 0, VW, 3);
+
+    this.add.text(VW / 2, 28, "MY COLLECTION", {
       fontFamily: "Fraunces, serif",
-      fontSize: "26px",
-      color: "#be185d",
+      fontSize: "22px",
+      color: WHITE,
     }).setOrigin(0.5);
-
-    this.add.text(VW / 2, 72, `${col.size} / ${SQUISHIES.length} squishies collected`, {
+    this.add.text(VW / 2, 56, `${col.size} / ${SQUISHIES.length} squishies`, {
       fontFamily: "Manrope, sans-serif",
       fontSize: "13px",
-      color: "#9d174d",
+      color: hexStr(ACCENT2),
     }).setOrigin(0.5);
 
-    // Grid
-    const cols  = 4;
-    const cellW = (VW - 24) / cols;
-    const cellH = 90;
-    const startY = 110;
+    // Grid of squishies
+    const cols   = 4;
+    const cellW  = (VW - 24) / cols;
+    const cellH  = 88;
+    const startY = 100;
 
     SQUISHIES.forEach((sq, idx) => {
-      const col2   = idx % cols;
-      const row    = Math.floor(idx / cols);
-      const cx     = 12 + col2 * cellW + cellW / 2;
-      const cy     = startY + row * cellH + cellH / 2;
+      const col_i  = idx % cols;
+      const row_i  = Math.floor(idx / cols);
+      const cx     = 12 + col_i * cellW + cellW / 2;
+      const cy     = startY + row_i * cellH + cellH / 2;
       const owned  = col.has(sq.id);
       const rc     = RARITY_COLORS[sq.rarity];
 
-      const card = this.add.rectangle(cx, cy, cellW - 6, cellH - 6, owned ? 0xffffff : 0xf3f4f6)
-        .setStrokeStyle(2, owned ? rc : 0xe5e7eb);
+      const cardGfx = this.add.graphics();
+      roundRect(
+        cardGfx,
+        cx - cellW / 2 + 4, cy - cellH / 2 + 4,
+        cellW - 8, cellH - 8,
+        10,
+        owned ? SURFACE : 0x0a0a16,
+        1,
+        owned ? rc : BORDER,
+        owned ? 2 : 1,
+      );
 
       if (owned) {
-        this.add.text(cx, cy - 18, sq.emoji, { fontSize: "22px" }).setOrigin(0.5);
-        this.add.text(cx, cy + 10, sq.name, {
+        this.add.text(cx, cy - 16, sq.emoji, { fontSize: "22px" }).setOrigin(0.5);
+        this.add.text(cx, cy + 12, sq.name, {
           fontFamily: "Manrope, sans-serif",
           fontSize: "8px",
           fontStyle: "bold",
-          color: "#1f2937",
-          wordWrap: { width: cellW - 10 },
+          color: WHITE,
+          wordWrap: { width: cellW - 12 },
           align: "center",
         }).setOrigin(0.5);
-        this.add.text(cx, cy + 26, sq.rarity, {
+        this.add.text(cx, cy + 26, sq.rarity.toUpperCase(), {
           fontFamily: "Manrope, sans-serif",
           fontSize: "7px",
           color: hexStr(rc),
         }).setOrigin(0.5);
-
-        // Gentle float for legendaries+
-        if (rarityRank(sq.rarity) >= 4) {
-          this.tweens.add({
-            targets: card,
-            y: cy - 3,
-            duration: 900,
-            yoyo: true,
-            repeat: -1,
-            ease: "Sine.easeInOut",
-          });
-        }
       } else {
-        // Silhouette lock
-        this.add.text(cx, cy - 10, "❓", { fontSize: "22px", color: "#d1d5db" }).setOrigin(0.5);
-        this.add.text(cx, cy + 18, "???", {
+        this.add.text(cx, cy - 6, "?", {
+          fontFamily: "Fraunces, serif",
+          fontSize: "24px",
+          color: "#2e2e52",
+        }).setOrigin(0.5);
+        this.add.text(cx, cy + 18, sq.rarity.toUpperCase(), {
           fontFamily: "Manrope, sans-serif",
-          fontSize: "9px",
-          color: "#d1d5db",
+          fontSize: "7px",
+          color: "#2e2e52",
         }).setOrigin(0.5);
       }
     });
 
     // Back button
-    const back = this.add.rectangle(VW / 2, VH - 44, 180, 52, 0xec4899)
-      .setStrokeStyle(3, 0xbe185d)
+    const backGfx = this.add.graphics();
+    roundRect(backGfx, VW / 2 - 90, VH - 58, 180, 44, 22, SURFACE2, 1, BORDER, 1);
+    const backHit = this.add.rectangle(VW / 2, VH - 36, 180, 44, 0, 0)
       .setInteractive({ useHandCursor: true });
-    this.add.text(VW / 2, VH - 44, "← Back", {
+    this.add.text(VW / 2, VH - 36, "← BACK TO MENU", {
       fontFamily: "Manrope, sans-serif",
-      fontSize: "18px",
+      fontSize: "13px",
       fontStyle: "bold",
-      color: "#ffffff",
+      color: hexStr(ACCENT2),
     }).setOrigin(0.5);
-    back.on("pointerover", () => this.tweens.add({ targets: back, scaleX: 1.06, scaleY: 1.06, duration: 70 }));
-    back.on("pointerout",  () => this.tweens.add({ targets: back, scaleX: 1.0,  scaleY: 1.0,  duration: 70 }));
-    back.on("pointerdown", () => {
-      this.cameras.main.fadeOut(180, 253, 242, 248);
+
+    backHit.on("pointerover", () => this.tweens.add({ targets: backGfx, scaleX: 1.04, scaleY: 1.04, duration: 70 }));
+    backHit.on("pointerout",  () => this.tweens.add({ targets: backGfx, scaleX: 1.0,  scaleY: 1.0,  duration: 70 }));
+    backHit.on("pointerdown", () => {
+      this.cameras.main.fadeOut(180, 13, 13, 26);
       this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("menu"));
     });
 
-    this.cameras.main.fadeIn(280, 253, 242, 248);
+    this.cameras.main.fadeIn(220, 13, 13, 26);
   }
 }
 
@@ -933,11 +1197,12 @@ export function startGame(parent: HTMLElement, onScore: (n: number) => void): ()
     parent,
     width: VW,
     height: VH,
-    backgroundColor: "#fdf2f8",
+    backgroundColor: "#0d0d1a",
     scale: {
       mode: Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_BOTH,
     },
+    physics: { default: "arcade", arcade: { gravity: { x: 0, y: 0 } } },
     scene: [
       new MenuScene(),
       new TradeScene(onScore),
