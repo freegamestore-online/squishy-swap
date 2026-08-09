@@ -3,7 +3,7 @@ import Phaser from "phaser";
 const VW = 420;
 const VH = 700;
 
-// ─── Data ───────────────────────────────────────────────────────────────────
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 type Rarity = "Common" | "Uncommon" | "Rare" | "Epic" | "Legendary" | "Ultra Rare";
 
@@ -12,7 +12,7 @@ interface Squishy {
   emoji: string;
   name: string;
   rarity: Rarity;
-  value: number; // 1–100 for trade scoring
+  value: number;
 }
 
 interface ComputerPlayer {
@@ -22,33 +22,42 @@ interface ComputerPlayer {
   color: number;
 }
 
+interface ResultData {
+  given: Squishy | null;
+  received: Squishy[];
+  score: number;
+  collectionSize: number;
+}
+
+// ─── Data ────────────────────────────────────────────────────────────────────
+
 const SQUISHIES: Squishy[] = [
-  { id: "strawberry",  emoji: "🍓", name: "Strawberry",   rarity: "Common",     value: 10 },
-  { id: "donut",       emoji: "🍩", name: "Donut",        rarity: "Common",     value: 12 },
-  { id: "star",        emoji: "⭐", name: "Star",         rarity: "Common",     value: 8  },
-  { id: "cloud",       emoji: "☁️", name: "Cloud",        rarity: "Common",     value: 9  },
-  { id: "lemon",       emoji: "🍋", name: "Lemon",        rarity: "Common",     value: 11 },
-  { id: "cat",         emoji: "🐱", name: "Cat",          rarity: "Uncommon",   value: 22 },
-  { id: "bunny",       emoji: "🐰", name: "Bunny",        rarity: "Uncommon",   value: 25 },
-  { id: "bear",        emoji: "🐻", name: "Bear",         rarity: "Uncommon",   value: 20 },
-  { id: "penguin",     emoji: "🐧", name: "Penguin",      rarity: "Uncommon",   value: 24 },
-  { id: "frog",        emoji: "🐸", name: "Frog",         rarity: "Uncommon",   value: 21 },
-  { id: "unicorn",     emoji: "🦄", name: "Unicorn",      rarity: "Rare",       value: 45 },
-  { id: "dragon",      emoji: "🐉", name: "Dragon",       rarity: "Rare",       value: 50 },
-  { id: "rainbow",     emoji: "🌈", name: "Rainbow",      rarity: "Rare",       value: 42 },
-  { id: "gem",         emoji: "💎", name: "Crystal Gem",  rarity: "Epic",       value: 70 },
-  { id: "crown",       emoji: "👑", name: "Crown",        rarity: "Epic",       value: 75 },
-  { id: "phoenix",     emoji: "🔥", name: "Phoenix",      rarity: "Legendary",  value: 88 },
-  { id: "galaxy",      emoji: "🌌", name: "Galaxy",       rarity: "Legendary",  value: 92 },
-  { id: "sparkle",     emoji: "✨", name: "Sparkle",      rarity: "Ultra Rare", value: 99 },
+  { id: "strawberry", emoji: "🍓", name: "Strawberry",  rarity: "Common",     value: 10 },
+  { id: "donut",      emoji: "🍩", name: "Donut",       rarity: "Common",     value: 12 },
+  { id: "star",       emoji: "⭐", name: "Star",        rarity: "Common",     value: 8  },
+  { id: "cloud",      emoji: "☁️", name: "Cloud",       rarity: "Common",     value: 9  },
+  { id: "lemon",      emoji: "🍋", name: "Lemon",       rarity: "Common",     value: 11 },
+  { id: "cat",        emoji: "🐱", name: "Cat",         rarity: "Uncommon",   value: 22 },
+  { id: "bunny",      emoji: "🐰", name: "Bunny",       rarity: "Uncommon",   value: 25 },
+  { id: "bear",       emoji: "🐻", name: "Bear",        rarity: "Uncommon",   value: 20 },
+  { id: "penguin",    emoji: "🐧", name: "Penguin",     rarity: "Uncommon",   value: 24 },
+  { id: "frog",       emoji: "🐸", name: "Frog",        rarity: "Uncommon",   value: 21 },
+  { id: "unicorn",    emoji: "🦄", name: "Unicorn",     rarity: "Rare",       value: 45 },
+  { id: "dragon",     emoji: "🐉", name: "Dragon",      rarity: "Rare",       value: 50 },
+  { id: "rainbow",    emoji: "🌈", name: "Rainbow",     rarity: "Rare",       value: 42 },
+  { id: "gem",        emoji: "💎", name: "Crystal Gem", rarity: "Epic",       value: 70 },
+  { id: "crown",      emoji: "👑", name: "Crown",       rarity: "Epic",       value: 75 },
+  { id: "phoenix",    emoji: "🔥", name: "Phoenix",     rarity: "Legendary",  value: 88 },
+  { id: "galaxy",     emoji: "🌌", name: "Galaxy",      rarity: "Legendary",  value: 92 },
+  { id: "sparkle",    emoji: "✨", name: "Sparkle",     rarity: "Ultra Rare", value: 99 },
 ];
 
 const COMPUTER_PLAYERS: ComputerPlayer[] = [
-  { name: "Mochi",      emoji: "🧁", personality: "generous", color: 0xf9a8d4 },
-  { name: "Pudding",    emoji: "🍮", personality: "fair",     color: 0xfde68a },
-  { name: "Jellybean",  emoji: "🍬", personality: "stingy",  color: 0xa5f3fc },
-  { name: "Marshmallow",emoji: "☁️", personality: "fair",    color: 0xe9d5ff },
-  { name: "Boba",       emoji: "🧋", personality: "generous", color: 0xbbf7f4 },
+  { name: "Mochi",       emoji: "🧁", personality: "generous", color: 0xf9a8d4 },
+  { name: "Pudding",     emoji: "🍮", personality: "fair",     color: 0xfde68a },
+  { name: "Jellybean",   emoji: "🍬", personality: "stingy",  color: 0xa5f3fc },
+  { name: "Marshmallow", emoji: "☁️", personality: "fair",    color: 0xe9d5ff },
+  { name: "Boba",        emoji: "🧋", personality: "generous", color: 0xbbf7d0 },
 ];
 
 const RARITY_COLORS: Record<Rarity, number> = {
@@ -80,7 +89,7 @@ function weightedRandomSquishy(maxValue: number, exclude: string[]): Squishy {
   return finalPool[finalPool.length - 1] ?? SQUISHIES[0]!;
 }
 
-// ─── Persistent collection ───────────────────────────────────────────────────
+// ─── Storage ─────────────────────────────────────────────────────────────────
 
 const STORAGE_KEY = "squishyswap_collection";
 
@@ -96,144 +105,141 @@ function saveCollection(col: Set<string>): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify([...col]));
 }
 
-// ─── Menu Scene ──────────────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function hexStr(n: number): string {
+  return `#${n.toString(16).padStart(6, "0")}`;
+}
+
+function pick<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)] ?? arr[0]!;
+}
+
+// ─── Menu Scene ───────────────────────────────────────────────────────────────
 
 class MenuScene extends Phaser.Scene {
-  private collection: Set<string> = new Set();
-
   constructor() { super("menu"); }
 
   create(): void {
-    this.collection = loadCollection();
+    const col = loadCollection();
 
-    // Background
-    this.add.rectangle(VW / 2, VH / 2, VW, VH, 0xfdf2f8).setDepth(-10);
+    // Soft pink background
+    this.add.rectangle(VW / 2, VH / 2, VW, VH, 0xfdf2f8);
 
-    // Floating sparkles
-    for (let i = 0; i < 20; i++) {
-      this.spawnSparkle();
+    // Floating ambient sparkles
+    const sparkleEmojis = ["✨", "💫", "🌸", "💕", "⭐"];
+    for (let i = 0; i < 18; i++) {
+      const x = Math.random() * VW;
+      const y = Math.random() * VH;
+      const t = this.add.text(x, y, pick(sparkleEmojis), {
+        fontSize: `${10 + Math.random() * 12}px`,
+      }).setAlpha(0.35);
+      this.tweens.add({
+        targets: t,
+        y: y - 50 - Math.random() * 60,
+        alpha: 0,
+        duration: 2500 + Math.random() * 2500,
+        delay: Math.random() * 2500,
+        ease: "Sine.easeIn",
+        repeat: -1,
+        onRepeat: () => {
+          t.x = Math.random() * VW;
+          t.y = VH * 0.2 + Math.random() * VH * 0.7;
+          t.setAlpha(0.35);
+        },
+      });
     }
 
-    // Title
-    this.add.text(VW / 2, 140, "🧸", { fontSize: "72px" }).setOrigin(0.5);
-    this.add.text(VW / 2, 220, "Squishy Swap!", {
+    // Big teddy bear icon, bouncing
+    const bear = this.add.text(VW / 2, 150, "🧸", { fontSize: "80px" }).setOrigin(0.5);
+    this.tweens.add({
+      targets: bear,
+      y: 160,
+      duration: 1200,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut",
+    });
+
+    this.add.text(VW / 2, 240, "Squishy Swap!", {
       fontFamily: "Fraunces, serif",
-      fontSize: "36px",
+      fontSize: "38px",
       color: "#be185d",
       stroke: "#fce7f3",
-      strokeThickness: 4,
+      strokeThickness: 5,
     }).setOrigin(0.5);
-    this.add.text(VW / 2, 265, "Trade squishies. Collect them all! ✨", {
+
+    this.add.text(VW / 2, 285, "Trade squishies. Collect them all! ✨", {
       fontFamily: "Manrope, sans-serif",
-      fontSize: "15px",
+      fontSize: "14px",
       color: "#9d174d",
     }).setOrigin(0.5);
 
-    // Collection count
-    const collected = this.collection.size;
-    this.add.text(VW / 2, 310, `📦 ${collected} / ${SQUISHIES.length} collected`, {
+    this.add.text(VW / 2, 320, `📦 ${col.size} / ${SQUISHIES.length} collected`, {
       fontFamily: "Manrope, sans-serif",
       fontSize: "14px",
       color: "#6b7280",
     }).setOrigin(0.5);
 
     // Play button
-    const playBtn = this.add.rectangle(VW / 2, 400, 220, 60, 0xec4899, 1)
-      .setInteractive({ useHandCursor: true });
-    playBtn.setStrokeStyle(3, 0xbe185d);
-    this.add.text(VW / 2, 400, "🎮  PLAY", {
-      fontFamily: "Manrope, sans-serif",
-      fontSize: "22px",
-      fontStyle: "bold",
-      color: "#ffffff",
-    }).setOrigin(0.5);
+    this.makeButton(VW / 2, 410, 220, 62, "🎮  PLAY", 0xec4899, 0xbe185d, "#ffffff", () => {
+      this.cameras.main.fadeOut(180, 253, 242, 248);
+      this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("trade"));
+    });
 
     // Collection button
-    const colBtn = this.add.rectangle(VW / 2, 480, 220, 55, 0xf9a8d4, 1)
-      .setInteractive({ useHandCursor: true });
-    colBtn.setStrokeStyle(3, 0xec4899);
-    this.add.text(VW / 2, 480, "🎀  COLLECTION", {
-      fontFamily: "Manrope, sans-serif",
-      fontSize: "18px",
-      fontStyle: "bold",
-      color: "#9d174d",
-    }).setOrigin(0.5);
-
-    // Bounce animation on play button
-    this.tweens.add({
-      targets: playBtn,
-      scaleY: 0.95,
-      scaleX: 1.03,
-      duration: 700,
-      yoyo: true,
-      repeat: -1,
-      ease: "Sine.easeInOut",
+    this.makeButton(VW / 2, 495, 220, 56, "🎀  COLLECTION", 0xf9a8d4, 0xec4899, "#9d174d", () => {
+      this.cameras.main.fadeOut(180, 253, 242, 248);
+      this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("collection"));
     });
 
-    playBtn.on("pointerdown", () => {
-      this.cameras.main.fadeOut(200, 253, 242, 248);
-      this.cameras.main.once("camerafadeoutcomplete", () => {
-        this.scene.start("trade");
-      });
-    });
-
-    colBtn.on("pointerdown", () => {
-      this.cameras.main.fadeOut(200, 253, 242, 248);
-      this.cameras.main.once("camerafadeoutcomplete", () => {
-        this.scene.start("collection");
-      });
-    });
-
-    [playBtn, colBtn].forEach(btn => {
-      btn.on("pointerover", () => btn.setScale(1.05));
-      btn.on("pointerout", () => btn.setScale(1.0));
-    });
-
-    this.cameras.main.fadeIn(300, 253, 242, 248);
+    this.cameras.main.fadeIn(280, 253, 242, 248);
   }
 
-  private spawnSparkle(): void {
-    const x = Math.random() * VW;
-    const y = Math.random() * VH;
-    const emojis = ["✨", "💫", "⭐", "🌸", "💕"];
-    const e = emojis[Math.floor(Math.random() * emojis.length)] ?? "✨";
-    const t = this.add.text(x, y, e, { fontSize: `${10 + Math.random() * 14}px` }).setAlpha(0.4);
-    this.tweens.add({
-      targets: t,
-      y: y - 40 - Math.random() * 60,
-      alpha: 0,
-      duration: 2000 + Math.random() * 3000,
-      delay: Math.random() * 3000,
-      repeat: -1,
-      onRepeat: () => {
-        t.x = Math.random() * VW;
-        t.y = VH * 0.3 + Math.random() * VH * 0.6;
-        t.setAlpha(0.4);
-      },
-    });
+  private makeButton(
+    x: number, y: number, w: number, h: number,
+    label: string, fill: number, stroke: number, textColor: string,
+    onDown: () => void,
+  ): void {
+    const btn = this.add.rectangle(x, y, w, h, fill)
+      .setStrokeStyle(3, stroke)
+      .setInteractive({ useHandCursor: true });
+    this.add.text(x, y, label, {
+      fontFamily: "Manrope, sans-serif",
+      fontSize: "20px",
+      fontStyle: "bold",
+      color: textColor,
+    }).setOrigin(0.5);
+
+    btn.on("pointerover", () => this.tweens.add({ targets: btn, scaleX: 1.05, scaleY: 1.05, duration: 80, ease: "Sine.easeOut" }));
+    btn.on("pointerout",  () => this.tweens.add({ targets: btn, scaleX: 1.0,  scaleY: 1.0,  duration: 80, ease: "Sine.easeOut" }));
+    btn.on("pointerdown", onDown);
   }
 }
 
-// ─── Trade Scene ─────────────────────────────────────────────────────────────
+// ─── Trade Scene ──────────────────────────────────────────────────────────────
 
 class TradeScene extends Phaser.Scene {
   private readonly onScore: (n: number) => void;
-  private collection: Set<string> = new Set();
 
+  private collection!: Set<string>;
   private mySquishy!: Squishy;
   private cp!: ComputerPlayer;
   private offered: Squishy[] = [];
   private addCount = 0;
   private cpIndex = 0;
-  private readonly MAX_ADD = 3;
-  private readonly MAX_CP = 5;
 
-  private offeredGroup!: Phaser.GameObjects.Container;
+  private readonly MAX_ADD = 3;
+  private readonly MAX_CP  = 5;
+
+  // UI refs rebuilt each trade
   private speechText!: Phaser.GameObjects.Text;
   private speechBubble!: Phaser.GameObjects.Rectangle;
   private addBtn!: Phaser.GameObjects.Rectangle;
-  private addLabel!: Phaser.GameObjects.Text;
-  private totalValueText!: Phaser.GameObjects.Text;
+  private addBtnLabel!: Phaser.GameObjects.Text;
+  private valueText!: Phaser.GameObjects.Text;
+  // Container that holds ALL offered-card objects so we can wipe & rebuild cleanly
+  private cardLayer!: Phaser.GameObjects.Layer;
 
   constructor(onScore: (n: number) => void) {
     super("trade");
@@ -242,405 +248,412 @@ class TradeScene extends Phaser.Scene {
 
   create(): void {
     this.collection = loadCollection();
-
     if (this.collection.size === 0) {
       this.collection.add("strawberry");
       saveCollection(this.collection);
     }
-
     this.cpIndex = 0;
-    this.startNewTrade();
+    this.buildTrade();
   }
 
-  private startNewTrade(): void {
+  // Completely rebuild the scene for a new CP/trade
+  private buildTrade(): void {
+    // Destroy everything from any previous trade
     this.children.removeAll(true);
+    this.tweens.killAll();
 
+    // Pick my squishy & CP
     const myIds = [...this.collection];
-    const myId = myIds[Math.floor(Math.random() * myIds.length)] ?? "strawberry";
+    const myId = pick(myIds);
     this.mySquishy = SQUISHIES.find(s => s.id === myId) ?? SQUISHIES[0]!;
-
     this.cp = COMPUTER_PLAYERS[this.cpIndex % COMPUTER_PLAYERS.length]!;
     this.addCount = 0;
-    this.offered = this.generateOffer(this.cp.personality, 0);
+    this.offered = this.generateOffer();
 
-    this.buildUI();
-  }
+    // ── Background ──
+    this.add.rectangle(VW / 2, VH / 2, VW, VH, 0xfdf2f8);
 
-  private generateOffer(personality: string, addCount: number): Squishy[] {
-    const myVal = this.mySquishy.value;
-    let targetVal: number;
-    if (personality === "generous") targetVal = myVal * (1.2 + addCount * 0.3);
-    else if (personality === "stingy") targetVal = myVal * (0.6 + addCount * 0.2);
-    else targetVal = myVal * (0.9 + addCount * 0.25);
+    // ── CP header strip ──
+    this.add.rectangle(VW / 2, 65, VW, 130, this.cp.color, 0.6)
+      .setStrokeStyle(2, 0xfce7f3);
 
-    const count = personality === "generous" ? 2 : personality === "stingy" ? 1 : 2;
-    const result: Squishy[] = [];
-    const usedIds: string[] = [this.mySquishy.id];
-
-    for (let i = 0; i < count + addCount; i++) {
-      const each = targetVal / (count + addCount);
-      const s = weightedRandomSquishy(each * 1.5, usedIds);
-      result.push(s);
-      usedIds.push(s.id);
-    }
-    return result;
-  }
-
-  private buildUI(): void {
-    this.add.rectangle(VW / 2, VH / 2, VW, VH, 0xfdf2f8).setDepth(-10);
-
-    // CP header strip
-    const cpBg = this.add.rectangle(VW / 2, 60, VW, 120, this.cp.color, 0.7);
-    cpBg.setStrokeStyle(2, 0xfce7f3);
-
-    this.add.text(40, 30, this.cp.emoji, { fontSize: "48px" });
-    this.add.text(100, 35, this.cp.name, {
+    this.add.text(22, 22, this.cp.emoji, { fontSize: "52px" });
+    this.add.text(84, 26, this.cp.name, {
       fontFamily: "Fraunces, serif",
       fontSize: "22px",
       color: "#1f2937",
     });
-    this.add.text(100, 62, `Personality: ${this.cp.personality}`, {
+    this.add.text(84, 56, this.personalityLabel(), {
       fontFamily: "Manrope, sans-serif",
       fontSize: "12px",
       color: "#6b7280",
     });
-    this.add.text(VW - 16, 35, `${this.cpIndex + 1}/${this.MAX_CP}`, {
+    this.add.text(VW - 14, 26, `${this.cpIndex + 1} / ${this.MAX_CP}`, {
       fontFamily: "Manrope, sans-serif",
       fontSize: "13px",
-      color: "#6b7280",
+      color: "#9d174d",
     }).setOrigin(1, 0);
 
-    // Speech bubble
-    this.speechBubble = this.add.rectangle(VW / 2, 118, VW - 40, 36, 0xffffff, 0.9);
-    this.speechBubble.setStrokeStyle(2, 0xf9a8d4);
-    this.speechText = this.add.text(VW / 2, 118, this.getGreeting(), {
+    // ── Speech bubble ──
+    this.speechBubble = this.add.rectangle(VW / 2, 116, VW - 32, 34, 0xffffff, 0.95)
+      .setStrokeStyle(2, 0xf9a8d4);
+    this.speechText = this.add.text(VW / 2, 116, this.getGreeting(), {
       fontFamily: "Manrope, sans-serif",
       fontSize: "13px",
       color: "#be185d",
     }).setOrigin(0.5);
 
-    this.add.text(VW / 2, 155, "🔄  TRADE OFFER", {
-      fontFamily: "Manrope, sans-serif",
-      fontSize: "13px",
-      color: "#9d174d",
-      fontStyle: "bold",
-    }).setOrigin(0.5);
-
-    // My squishy
-    this.add.text(VW / 2, 190, "YOUR SQUISHY", {
-      fontFamily: "Manrope, sans-serif",
-      fontSize: "11px",
-      color: "#6b7280",
-      fontStyle: "bold",
-    }).setOrigin(0.5);
-    this.buildMySquishyCard(VW / 2, 240);
-
-    this.add.text(VW / 2, 295, "⬆️  for  ⬇️", {
-      fontFamily: "Manrope, sans-serif",
-      fontSize: "14px",
-      color: "#9d174d",
-    }).setOrigin(0.5);
-
-    this.add.text(VW / 2, 325, "THEY OFFER", {
-      fontFamily: "Manrope, sans-serif",
-      fontSize: "11px",
-      color: "#6b7280",
-      fontStyle: "bold",
-    }).setOrigin(0.5);
-
-    this.offeredGroup = this.add.container(0, 0);
-    this.buildOfferedCards();
-
-    this.totalValueText = this.add.text(VW / 2, 510, "", {
-      fontFamily: "Manrope, sans-serif",
-      fontSize: "13px",
-      color: "#6b7280",
-    }).setOrigin(0.5);
-    this.updateTotalValueText();
-
-    this.buildButtons();
-
-    this.cameras.main.fadeIn(250, 253, 242, 248);
-  }
-
-  private buildMySquishyCard(x: number, y: number): void {
-    const rarityColor = RARITY_COLORS[this.mySquishy.rarity];
-    const card = this.add.rectangle(x, y, 130, 80, 0xffffff, 1);
-    card.setStrokeStyle(3, rarityColor);
-    this.add.text(x, y - 15, this.mySquishy.emoji, { fontSize: "30px" }).setOrigin(0.5);
-    this.add.text(x, y + 18, this.mySquishy.name, {
-      fontFamily: "Manrope, sans-serif",
-      fontSize: "11px",
-      color: "#1f2937",
-      fontStyle: "bold",
-    }).setOrigin(0.5);
-    this.add.text(x, y + 34, this.mySquishy.rarity, {
+    // ── Section labels ──
+    this.add.text(VW / 2, 152, "YOUR SQUISHY", {
       fontFamily: "Manrope, sans-serif",
       fontSize: "10px",
-      color: `#${rarityColor.toString(16).padStart(6, "0")}`,
+      fontStyle: "bold",
+      color: "#9ca3af",
     }).setOrigin(0.5);
 
-    if (rarityRank(this.mySquishy.rarity) >= 3) {
+    this.buildMyCard(VW / 2, 205);
+
+    this.add.text(VW / 2, 265, "⬆️  for  ⬇️", {
+      fontFamily: "Manrope, sans-serif",
+      fontSize: "14px",
+      color: "#be185d",
+    }).setOrigin(0.5);
+
+    this.add.text(VW / 2, 295, "THEY OFFER", {
+      fontFamily: "Manrope, sans-serif",
+      fontSize: "10px",
+      fontStyle: "bold",
+      color: "#9ca3af",
+    }).setOrigin(0.5);
+
+    // Card layer — a Layer lets us add/remove offered cards without touching anything else
+    this.cardLayer = this.add.layer();
+    this.buildOfferedCards();
+
+    // Value text
+    this.valueText = this.add.text(VW / 2, 504, "", {
+      fontFamily: "Manrope, sans-serif",
+      fontSize: "12px",
+      color: "#6b7280",
+    }).setOrigin(0.5);
+    this.refreshValueText();
+
+    // Buttons
+    this.buildButtons();
+
+    this.cameras.main.fadeIn(220, 253, 242, 248);
+  }
+
+  // ── My squishy card ──────────────────────────────────────────────────────────
+  private buildMyCard(cx: number, cy: number): void {
+    const sq = this.mySquishy;
+    const rc = RARITY_COLORS[sq.rarity];
+
+    const card = this.add.rectangle(cx, cy, 140, 80, 0xffffff)
+      .setStrokeStyle(3, rc);
+    this.add.text(cx, cy - 16, sq.emoji, { fontSize: "28px" }).setOrigin(0.5);
+    this.add.text(cx, cy + 16, sq.name, {
+      fontFamily: "Manrope, sans-serif",
+      fontSize: "11px",
+      fontStyle: "bold",
+      color: "#1f2937",
+    }).setOrigin(0.5);
+    this.add.text(cx, cy + 32, sq.rarity, {
+      fontFamily: "Manrope, sans-serif",
+      fontSize: "10px",
+      color: hexStr(rc),
+    }).setOrigin(0.5);
+
+    // Pulse for high rarity
+    if (rarityRank(sq.rarity) >= 3) {
       this.tweens.add({
         targets: card,
-        alpha: 0.75,
-        duration: 600,
+        strokeAlpha: 0.3,
+        duration: 700,
         yoyo: true,
         repeat: -1,
+        ease: "Sine.easeInOut",
       });
     }
   }
 
+  // ── Offered cards ─────────────────────────────────────────────────────────────
   private buildOfferedCards(): void {
-    this.offeredGroup.removeAll(true);
+    // Wipe only the card layer
+    this.cardLayer.removeAll(true);
 
-    const count = this.offered.length;
-    const cardW = Math.min(100, (VW - 40) / count - 8);
-    const cardH = 90;
-    const totalW = count * (cardW + 8) - 8;
+    const count  = this.offered.length;
+    const gap    = 10;
+    const cardW  = Math.min(105, (VW - 32 - gap * (count - 1)) / count);
+    const cardH  = 100;
+    const totalW = count * cardW + (count - 1) * gap;
     const startX = (VW - totalW) / 2 + cardW / 2;
+    const cy     = 405;
 
     this.offered.forEach((sq, i) => {
-      const x = startX + i * (cardW + 8);
-      const y = 415;
-      const rarityColor = RARITY_COLORS[sq.rarity];
+      const cx = startX + i * (cardW + gap);
+      const rc = RARITY_COLORS[sq.rarity];
 
-      const card = this.add.rectangle(x, y, cardW, cardH, 0xffffff, 1);
-      card.setStrokeStyle(2, rarityColor);
-
-      const emoji = this.add.text(x, y - 18, sq.emoji, { fontSize: "26px" }).setOrigin(0.5);
-      const nameT = this.add.text(x, y + 14, sq.name, {
+      const card = this.add.rectangle(cx, cy, cardW, cardH, 0xffffff)
+        .setStrokeStyle(2, rc);
+      const emojiT = this.add.text(cx, cy - 22, sq.emoji, { fontSize: "24px" }).setOrigin(0.5);
+      const nameT  = this.add.text(cx, cy + 16, sq.name, {
         fontFamily: "Manrope, sans-serif",
         fontSize: "9px",
-        color: "#1f2937",
         fontStyle: "bold",
-        wordWrap: { width: cardW - 6 },
+        color: "#1f2937",
+        wordWrap: { width: cardW - 8 },
         align: "center",
       }).setOrigin(0.5);
-      const rarT = this.add.text(x, y + 30, sq.rarity, {
+      const rarT = this.add.text(cx, cy + 34, sq.rarity, {
         fontFamily: "Manrope, sans-serif",
         fontSize: "8px",
-        color: `#${rarityColor.toString(16).padStart(6, "0")}`,
+        color: hexStr(rc),
       }).setOrigin(0.5);
 
-      this.offeredGroup.add([card, emoji, nameT, rarT]);
+      // Add all to the layer so they're isolated
+      this.cardLayer.add([card, emojiT, nameT, rarT]);
 
-      // Bounce-in
-      card.setScale(0.5);
-      emoji.setScale(0.5);
+      // Pop-in animation
+      const targets = [card, emojiT, nameT, rarT];
+      targets.forEach(t => t.setScale(0.01));
       this.tweens.add({
-        targets: [card, emoji, nameT, rarT],
+        targets,
         scaleX: 1,
         scaleY: 1,
-        duration: 300,
-        delay: i * 80,
+        duration: 260,
+        delay: i * 70,
         ease: "Back.easeOut",
       });
 
-      // Glow for rares
+      // Sparkle badge for rares+
       if (rarityRank(sq.rarity) >= 2) {
+        const badge = this.add.text(cx + cardW / 2 - 6, cy - cardH / 2 + 2, "✨", { fontSize: "11px" });
+        this.cardLayer.add(badge);
         this.tweens.add({
-          targets: card,
-          alpha: 0.75,
-          duration: 700,
-          yoyo: true,
-          repeat: -1,
-        });
-        const sparkle = this.add.text(x + cardW / 2 - 8, y - cardH / 2, "✨", { fontSize: "10px" });
-        this.tweens.add({
-          targets: sparkle,
-          y: sparkle.y - 10,
+          targets: badge,
+          y: badge.y - 12,
           alpha: 0,
-          duration: 1200,
+          duration: 1000,
           repeat: -1,
-          delay: 300,
+          delay: i * 150,
+          ease: "Sine.easeIn",
+          onRepeat: () => {
+            badge.y = cy - cardH / 2 + 2;
+            badge.setAlpha(1);
+          },
         });
       }
     });
   }
 
+  // ── Buttons ───────────────────────────────────────────────────────────────────
   private buildButtons(): void {
-    const btnY = 580;
-    const btnH = 58;
+    const by = 592;
+    const bh = 62;
+    const bw = 118;
 
-    // ✅ Accept
-    const acceptBtn = this.add.rectangle(70, btnY, 110, btnH, 0x4ade80, 1)
+    // Accept ✅
+    const acceptBg = this.add.rectangle(62, by, bw, bh, 0x4ade80)
+      .setStrokeStyle(3, 0x16a34a)
       .setInteractive({ useHandCursor: true });
-    acceptBtn.setStrokeStyle(3, 0x16a34a);
-    this.add.text(70, btnY - 10, "✅", { fontSize: "22px" }).setOrigin(0.5);
-    this.add.text(70, btnY + 14, "ACCEPT", {
+    this.add.text(62, by - 12, "✅", { fontSize: "22px" }).setOrigin(0.5);
+    this.add.text(62, by + 16, "ACCEPT", {
       fontFamily: "Manrope, sans-serif",
       fontSize: "11px",
       fontStyle: "bold",
-      color: "#166534",
+      color: "#14532d",
     }).setOrigin(0.5);
 
-    // ➕ Add more
-    this.addBtn = this.add.rectangle(VW / 2, btnY, 110, btnH, 0xfbbf24, 1)
+    // Add more ➕
+    this.addBtn = this.add.rectangle(VW / 2, by, bw, bh, 0xfbbf24)
+      .setStrokeStyle(3, 0xd97706)
       .setInteractive({ useHandCursor: true });
-    this.addBtn.setStrokeStyle(3, 0xd97706);
-    this.add.text(VW / 2, btnY - 10, "➕", { fontSize: "22px" }).setOrigin(0.5);
-    this.addLabel = this.add.text(VW / 2, btnY + 14, "ADD MORE", {
+    this.add.text(VW / 2, by - 12, "➕", { fontSize: "22px" }).setOrigin(0.5);
+    this.addBtnLabel = this.add.text(VW / 2, by + 16, "ADD MORE", {
       fontFamily: "Manrope, sans-serif",
       fontSize: "11px",
       fontStyle: "bold",
-      color: "#92400e",
+      color: "#78350f",
     }).setOrigin(0.5);
 
-    if (this.addCount >= this.MAX_ADD) {
-      this.addBtn.setFillStyle(0xd1d5db);
-      this.addBtn.setStrokeStyle(3, 0x9ca3af);
-      this.addLabel.setColor("#9ca3af");
-    }
-
-    // ❌ Reject
-    const rejectBtn = this.add.rectangle(VW - 70, btnY, 110, btnH, 0xf87171, 1)
+    // Reject ❌
+    const rejectBg = this.add.rectangle(VW - 62, by, bw, bh, 0xf87171)
+      .setStrokeStyle(3, 0xdc2626)
       .setInteractive({ useHandCursor: true });
-    rejectBtn.setStrokeStyle(3, 0xdc2626);
-    this.add.text(VW - 70, btnY - 10, "❌", { fontSize: "22px" }).setOrigin(0.5);
-    this.add.text(VW - 70, btnY + 14, "REJECT", {
+    this.add.text(VW - 62, by - 12, "❌", { fontSize: "22px" }).setOrigin(0.5);
+    this.add.text(VW - 62, by + 16, "REJECT", {
       fontFamily: "Manrope, sans-serif",
       fontSize: "11px",
       fontStyle: "bold",
       color: "#7f1d1d",
     }).setOrigin(0.5);
 
-    acceptBtn.on("pointerdown", () => this.onAccept());
-    this.addBtn.on("pointerdown", () => this.onAddMore());
-    rejectBtn.on("pointerdown", () => this.onReject());
+    this.refreshAddBtn();
 
-    [acceptBtn, this.addBtn, rejectBtn].forEach(btn => {
-      btn.on("pointerover", () => btn.setScale(1.05));
-      btn.on("pointerout", () => btn.setScale(1.0));
-    });
+    // Hover scale
+    for (const btn of [acceptBg, this.addBtn, rejectBg]) {
+      btn.on("pointerover", () => this.tweens.add({ targets: btn, scaleX: 1.06, scaleY: 1.06, duration: 70 }));
+      btn.on("pointerout",  () => this.tweens.add({ targets: btn, scaleX: 1.0,  scaleY: 1.0,  duration: 70 }));
+    }
+
+    acceptBg.on("pointerdown", () => this.doAccept());
+    this.addBtn.on("pointerdown", () => this.doAddMore());
+    rejectBg.on("pointerdown", () => this.doReject());
   }
 
-  private updateTotalValueText(): void {
+  // ── Helpers ───────────────────────────────────────────────────────────────────
+
+  private generateOffer(): Squishy[] {
     const myVal = this.mySquishy.value;
-    const offeredVal = this.offered.reduce((s, sq) => s + sq.value, 0);
-    const diff = offeredVal - myVal;
-    const sign = diff >= 0 ? "+" : "";
-    this.totalValueText.setText(
-      `Offer value: ${offeredVal} pts  (yours: ${myVal} pts, ${sign}${diff})`
-    );
-    this.totalValueText.setColor(diff >= 0 ? "#16a34a" : "#dc2626");
+    const p = this.cp.personality;
+    const target = p === "generous" ? myVal * 1.3
+                 : p === "stingy"   ? myVal * 0.6
+                 :                    myVal * 0.95;
+    const count = p === "stingy" ? 1 : 2;
+    const result: Squishy[] = [];
+    const used = [this.mySquishy.id];
+    for (let i = 0; i < count; i++) {
+      const s = weightedRandomSquishy((target / count) * 1.6, used);
+      result.push(s);
+      used.push(s.id);
+    }
+    return result;
   }
 
-  private setSpeech(text: string): void {
-    this.speechText.setText(text);
+  private personalityLabel(): string {
+    return this.cp.personality === "generous" ? "💖 Generous trader"
+         : this.cp.personality === "stingy"   ? "😒 Stingy trader"
+         :                                       "🤝 Fair trader";
+  }
+
+  private getGreeting(): string {
+    const map: Record<string, string[]> = {
+      generous: ["Hi! I'd love to trade! 💕", "I have something great! 🌟", "Let's make a deal! 🎉"],
+      fair:     ["Hey! Wanna trade? 😊", "I think this is fair! 🤝", "Deal? 🌸"],
+      stingy:   ["Hmm... maybe? 🤔", "I guess I can trade... 😒", "Take it or leave it! 😤"],
+    };
+    return pick(map[this.cp.personality] ?? map["fair"]!);
+  }
+
+  private setSpeech(txt: string): void {
+    this.speechText.setText(txt);
+    // Gentle pop on the bubble only — no scale conflict with other tweens
+    this.tweens.killTweensOf(this.speechBubble);
+    this.speechBubble.setScale(1);
     this.tweens.add({
-      targets: [this.speechBubble, this.speechText],
-      scaleX: 1.03,
-      scaleY: 1.1,
-      duration: 120,
+      targets: this.speechBubble,
+      scaleX: 1.04,
+      scaleY: 1.12,
+      duration: 100,
       yoyo: true,
       ease: "Sine.easeOut",
     });
   }
 
-  private getGreeting(): string {
-    const greetings: Record<string, string[]> = {
-      generous: ["Hi! I'd love to trade! 💕", "I have something great for you! 🌟", "Let's make a deal! 🎉"],
-      fair:     ["Hey! Wanna trade? 😊", "I think this is fair! 🤝", "Deal? 🌸"],
-      stingy:   ["Hmm... maybe? 🤔", "I guess I can trade... 😒", "This is my best offer! 😤"],
-    };
-    const list = greetings[this.cp.personality] ?? greetings["fair"]!;
-    return list[Math.floor(Math.random() * list.length)] ?? "Let's trade!";
+  private refreshValueText(): void {
+    const myVal  = this.mySquishy.value;
+    const offVal = this.offered.reduce((s, q) => s + q.value, 0);
+    const diff   = offVal - myVal;
+    const sign   = diff >= 0 ? "+" : "";
+    this.valueText.setText(`Offer: ${offVal} pts  (yours: ${myVal} pts  ${sign}${diff})`);
+    this.valueText.setColor(diff >= 0 ? "#16a34a" : "#dc2626");
   }
 
-  private onAccept(): void {
-    const myVal = this.mySquishy.value;
-    const offeredVal = this.offered.reduce((s, sq) => s + sq.value, 0);
-    const ratio = offeredVal / Math.max(myVal, 1);
+  private refreshAddBtn(): void {
+    const maxed = this.addCount >= this.MAX_ADD;
+    this.addBtn.setFillStyle(maxed ? 0xd1d5db : 0xfbbf24);
+    this.addBtn.setStrokeStyle(3, maxed ? 0x9ca3af : 0xd97706);
+    this.addBtnLabel.setColor(maxed ? "#9ca3af" : "#78350f");
+    if (maxed) {
+      this.addBtn.removeInteractive();
+    }
+  }
+
+  // ── Actions ───────────────────────────────────────────────────────────────────
+
+  private doAccept(): void {
+    const myVal  = this.mySquishy.value;
+    const offVal = this.offered.reduce((s, q) => s + q.value, 0);
+    const ratio  = offVal / Math.max(myVal, 1);
+
     let score: number;
-    if (ratio >= 1.5) score = 90 + Math.floor(Math.random() * 10);
+    if      (ratio >= 1.5) score = 90 + Math.floor(Math.random() * 10);
     else if (ratio >= 1.1) score = 70 + Math.floor(Math.random() * 20);
     else if (ratio >= 0.9) score = 50 + Math.floor(Math.random() * 20);
     else if (ratio >= 0.6) score = 25 + Math.floor(Math.random() * 25);
-    else score = 5 + Math.floor(Math.random() * 20);
+    else                   score = 5  + Math.floor(Math.random() * 20);
 
     this.collection.delete(this.mySquishy.id);
     this.offered.forEach(s => this.collection.add(s.id));
     saveCollection(this.collection);
     this.onScore(this.collection.size);
 
-    this.cameras.main.fadeOut(200, 253, 242, 248);
+    this.cameras.main.fadeOut(180, 253, 242, 248);
     this.cameras.main.once("camerafadeoutcomplete", () => {
       this.scene.start("result", {
         given: this.mySquishy,
         received: this.offered,
         score,
         collectionSize: this.collection.size,
-      });
+      } satisfies ResultData);
     });
   }
 
-  private onAddMore(): void {
+  private doAddMore(): void {
     if (this.addCount >= this.MAX_ADD) return;
     this.addCount++;
 
-    const speeches: Record<string, string[]> = {
-      generous: ["Okay! I'll add one more! 🎁", "Sure! Take another! 💖", "Here, have this too! ✨"],
-      fair:     ["Hmm... I could add something! 🤔", "Fine, one more! 😊", "Okay, deal? 🌸"],
-      stingy:   ["Ugh, fine! 😤", "This better be worth it! 😒", "You drive a hard bargain! 😑"],
+    const map: Record<string, string[]> = {
+      generous: ["Okay! One more! 🎁", "Sure, take this too! 💖", "Here you go! ✨"],
+      fair:     ["Hmm… I could add one! 🤔", "Fine, one more! 😊", "Okay, deal? 🌸"],
+      stingy:   ["Ugh, fine! 😤", "This better be worth it! 😒", "Hard bargain! 😑"],
     };
-    const list = speeches[this.cp.personality] ?? speeches["fair"]!;
-    this.setSpeech(list[Math.floor(Math.random() * list.length)] ?? "Okay!");
+    this.setSpeech(pick(map[this.cp.personality] ?? map["fair"]!));
 
-    const usedIds = [this.mySquishy.id, ...this.offered.map(s => s.id)];
-    const newSquishy = weightedRandomSquishy(this.mySquishy.value * 0.8, usedIds);
-    this.offered.push(newSquishy);
+    const used = [this.mySquishy.id, ...this.offered.map(s => s.id)];
+    this.offered.push(weightedRandomSquishy(this.mySquishy.value * 0.8, used));
 
     this.buildOfferedCards();
-    this.updateTotalValueText();
-
-    if (this.addCount >= this.MAX_ADD) {
-      this.addBtn.setFillStyle(0xd1d5db);
-      this.addBtn.setStrokeStyle(3, 0x9ca3af);
-      this.addLabel.setColor("#9ca3af");
-    }
+    this.refreshValueText();
+    this.refreshAddBtn();
   }
 
-  private onReject(): void {
-    const speeches: Record<string, string[]> = {
+  private doReject(): void {
+    const map: Record<string, string[]> = {
       generous: ["Oh no! 😢 Maybe someone else?", "Fine... 💔", "I thought we were friends! 😭"],
-      fair:     ["Fine! Maybe someone else will trade! 😤", "Your loss! 🤷", "Okay, moving on! 😊"],
-      stingy:   ["FINE! I didn't want to trade anyway! 😤", "Whatever! 😒", "Hmph! 😤"],
+      fair:     ["Your loss! 🤷", "Okay, moving on! 😊", "Fine! Maybe someone else! 😤"],
+      stingy:   ["FINE! Didn't want to anyway! 😤", "Whatever! 😒", "Hmph! 😤"],
     };
-    const list = speeches[this.cp.personality] ?? speeches["fair"]!;
-    this.setSpeech(list[Math.floor(Math.random() * list.length)] ?? "Fine!");
+    this.setSpeech(pick(map[this.cp.personality] ?? map["fair"]!));
 
-    this.time.delayedCall(800, () => {
+    // Disable all buttons to prevent double-tap during delay
+    this.input.enabled = false;
+
+    this.time.delayedCall(700, () => {
       this.cpIndex++;
       if (this.cpIndex >= this.MAX_CP) {
-        this.cameras.main.fadeOut(200, 253, 242, 248);
+        this.cameras.main.fadeOut(180, 253, 242, 248);
         this.cameras.main.once("camerafadeoutcomplete", () => {
           this.scene.start("result", {
             given: null,
             received: [],
             score: 0,
             collectionSize: this.collection.size,
-          });
+          } satisfies ResultData);
         });
         return;
       }
-      this.cameras.main.fadeOut(200, 253, 242, 248);
+      this.cameras.main.fadeOut(180, 253, 242, 248);
       this.cameras.main.once("camerafadeoutcomplete", () => {
-        this.startNewTrade();
-        this.cameras.main.fadeIn(250, 253, 242, 248);
+        this.input.enabled = true;
+        this.buildTrade();
       });
     });
   }
 }
 
 // ─── Result Scene ─────────────────────────────────────────────────────────────
-
-interface ResultData {
-  given: Squishy | null;
-  received: Squishy[];
-  score: number;
-  collectionSize: number;
-}
 
 class ResultScene extends Phaser.Scene {
   private readonly onScore: (n: number) => void;
@@ -652,16 +665,17 @@ class ResultScene extends Phaser.Scene {
   create(data: ResultData): void {
     this.onScore(data.collectionSize);
 
-    this.add.rectangle(VW / 2, VH / 2, VW, VH, 0xfdf2f8).setDepth(-10);
+    this.add.rectangle(VW / 2, VH / 2, VW, VH, 0xfdf2f8);
 
     if (!data.given) {
-      this.add.text(VW / 2, VH / 2 - 60, "😔", { fontSize: "64px" }).setOrigin(0.5);
-      this.add.text(VW / 2, VH / 2 + 10, "No trade made!", {
+      // No trade was made
+      this.add.text(VW / 2, VH / 2 - 80, "😔", { fontSize: "72px" }).setOrigin(0.5);
+      this.add.text(VW / 2, VH / 2, "No trade made!", {
         fontFamily: "Fraunces, serif",
-        fontSize: "28px",
+        fontSize: "30px",
         color: "#be185d",
       }).setOrigin(0.5);
-      this.add.text(VW / 2, VH / 2 + 55, "Better luck next time!", {
+      this.add.text(VW / 2, VH / 2 + 50, "Better luck next time!", {
         fontFamily: "Manrope, sans-serif",
         fontSize: "16px",
         color: "#6b7280",
@@ -669,36 +683,38 @@ class ResultScene extends Phaser.Scene {
     } else {
       this.spawnConfetti();
 
-      this.add.text(VW / 2, 80, "🎉 TRADE COMPLETE! 🎉", {
+      this.add.text(VW / 2, 72, "🎉 TRADE COMPLETE! 🎉", {
         fontFamily: "Fraunces, serif",
         fontSize: "26px",
         color: "#be185d",
         stroke: "#fce7f3",
-        strokeThickness: 3,
+        strokeThickness: 4,
       }).setOrigin(0.5);
 
-      this.add.text(VW / 2, 140, "You gave:", {
+      // Given
+      this.add.text(VW / 2, 128, "You gave:", {
         fontFamily: "Manrope, sans-serif",
         fontSize: "13px",
-        color: "#6b7280",
+        color: "#9ca3af",
       }).setOrigin(0.5);
-      this.add.text(VW / 2, 168, `${data.given.emoji}  ${data.given.name}`, {
+      this.add.text(VW / 2, 158, `${data.given.emoji}  ${data.given.name}`, {
         fontFamily: "Manrope, sans-serif",
-        fontSize: "18px",
+        fontSize: "20px",
         fontStyle: "bold",
         color: "#1f2937",
       }).setOrigin(0.5);
 
-      this.add.text(VW / 2, 200, "⬇️", { fontSize: "20px" }).setOrigin(0.5);
+      this.add.text(VW / 2, 188, "⬇️", { fontSize: "18px" }).setOrigin(0.5);
 
-      this.add.text(VW / 2, 228, "You received:", {
+      // Received
+      this.add.text(VW / 2, 216, "You received:", {
         fontFamily: "Manrope, sans-serif",
         fontSize: "13px",
-        color: "#6b7280",
+        color: "#9ca3af",
       }).setOrigin(0.5);
 
-      const receivedStr = data.received.map(s => `${s.emoji} ${s.name}`).join("  +  ");
-      this.add.text(VW / 2, 258, receivedStr, {
+      const recStr = data.received.map(s => `${s.emoji} ${s.name}`).join("  +  ");
+      this.add.text(VW / 2, 248, recStr, {
         fontFamily: "Manrope, sans-serif",
         fontSize: "15px",
         fontStyle: "bold",
@@ -707,125 +723,100 @@ class ResultScene extends Phaser.Scene {
         align: "center",
       }).setOrigin(0.5);
 
-      const { label, color } = this.getTradeLabel(data.score);
-      this.add.rectangle(VW / 2, 360, VW - 60, 100, color, 0.15)
+      // Score panel
+      const { label, emoji: scoreEmoji, color } = this.tradeLabel(data.score);
+      const panel = this.add.rectangle(VW / 2, 360, VW - 48, 110, color, 0.12)
         .setStrokeStyle(3, color);
+      this.tweens.add({ targets: panel, scaleX: 1.02, scaleY: 1.02, duration: 600, yoyo: true, repeat: -1 });
 
-      this.add.text(VW / 2, 335, label, {
+      this.add.text(VW / 2, 335, `${scoreEmoji}  ${label}`, {
         fontFamily: "Fraunces, serif",
         fontSize: "24px",
-        color: `#${color.toString(16).padStart(6, "0")}`,
+        color: hexStr(color),
       }).setOrigin(0.5);
-
-      const scoreText = this.add.text(VW / 2, 375, "0 / 100", {
-        fontFamily: "Fraunces, serif",
+      this.add.text(VW / 2, 375, `${data.score} / 100`, {
+        fontFamily: "Manrope, sans-serif",
         fontSize: "32px",
         fontStyle: "bold",
-        color: `#${color.toString(16).padStart(6, "0")}`,
+        color: hexStr(color),
       }).setOrigin(0.5);
-
-      let current = 0;
-      this.time.addEvent({
-        delay: 20,
-        repeat: data.score,
-        callback: () => {
-          current++;
-          scoreText.setText(`${current} / 100`);
-        },
-      });
-
-      this.add.text(VW / 2, 445, `📦 Collection: ${data.collectionSize} / ${SQUISHIES.length}`, {
+      this.add.text(VW / 2, 410, this.tradeMessage(data.score), {
         fontFamily: "Manrope, sans-serif",
-        fontSize: "14px",
+        fontSize: "13px",
         color: "#6b7280",
       }).setOrigin(0.5);
 
-      const rareNew = data.received.filter(s => rarityRank(s.rarity) >= 2);
-      if (rareNew.length > 0) {
-        const rareText = this.add.text(
-          VW / 2, 475,
-          `✨ NEW RARE: ${rareNew.map(s => `${s.emoji} ${s.name}`).join(", ")}`,
-          {
-            fontFamily: "Manrope, sans-serif",
-            fontSize: "13px",
-            color: "#7c3aed",
-            fontStyle: "bold",
-          }
-        ).setOrigin(0.5);
-        this.tweens.add({
-          targets: rareText,
-          scaleX: 1.08,
-          scaleY: 1.08,
-          duration: 500,
-          yoyo: true,
-          repeat: -1,
-        });
-      }
+      // Collection count
+      this.add.text(VW / 2, 460, `📦 Collection: ${data.collectionSize} / ${SQUISHIES.length}`, {
+        fontFamily: "Manrope, sans-serif",
+        fontSize: "14px",
+        color: "#9d174d",
+      }).setOrigin(0.5);
     }
 
     // Buttons
-    const playAgainBtn = this.add.rectangle(VW / 2 - 70, 560, 120, 55, 0xec4899, 1)
-      .setInteractive({ useHandCursor: true });
-    playAgainBtn.setStrokeStyle(3, 0xbe185d);
-    this.add.text(VW / 2 - 70, 548, "🔄", { fontSize: "18px" }).setOrigin(0.5);
-    this.add.text(VW / 2 - 70, 570, "TRADE AGAIN", {
-      fontFamily: "Manrope, sans-serif",
-      fontSize: "10px",
-      fontStyle: "bold",
-      color: "#ffffff",
-    }).setOrigin(0.5);
-
-    const collectionBtn = this.add.rectangle(VW / 2 + 70, 560, 120, 55, 0xf9a8d4, 1)
-      .setInteractive({ useHandCursor: true });
-    collectionBtn.setStrokeStyle(3, 0xec4899);
-    this.add.text(VW / 2 + 70, 548, "🎀", { fontSize: "18px" }).setOrigin(0.5);
-    this.add.text(VW / 2 + 70, 570, "COLLECTION", {
-      fontFamily: "Manrope, sans-serif",
-      fontSize: "10px",
-      fontStyle: "bold",
-      color: "#9d174d",
-    }).setOrigin(0.5);
-
-    playAgainBtn.on("pointerdown", () => {
-      this.cameras.main.fadeOut(200, 253, 242, 248);
+    this.makeButton(VW / 2 - 75, VH - 80, "🔄  Trade Again", 0xec4899, 0xbe185d, "#fff", () => {
+      this.cameras.main.fadeOut(180, 253, 242, 248);
       this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("trade"));
     });
-    collectionBtn.on("pointerdown", () => {
-      this.cameras.main.fadeOut(200, 253, 242, 248);
+    this.makeButton(VW / 2 + 75, VH - 80, "🎀  Collection", 0xf9a8d4, 0xec4899, "#9d174d", () => {
+      this.cameras.main.fadeOut(180, 253, 242, 248);
       this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("collection"));
     });
 
-    [playAgainBtn, collectionBtn].forEach(btn => {
-      btn.on("pointerover", () => btn.setScale(1.05));
-      btn.on("pointerout", () => btn.setScale(1.0));
-    });
-
-    this.cameras.main.fadeIn(300, 253, 242, 248);
+    this.cameras.main.fadeIn(280, 253, 242, 248);
   }
 
-  private getTradeLabel(score: number): { label: string; color: number } {
-    if (score >= 85) return { label: "🔥 AMAZING TRADE!", color: 0xf59e0b };
-    if (score >= 65) return { label: "💖 GREAT TRADE!",   color: 0xec4899 };
-    if (score >= 45) return { label: "😊 FAIR TRADE",     color: 0x4ade80 };
-    if (score >= 25) return { label: "😬 NOT THE BEST",   color: 0xf97316 };
-    return                  { label: "💀 TERRIBLE TRADE!", color: 0xef4444 };
+  private makeButton(
+    x: number, y: number, label: string,
+    fill: number, stroke: number, textColor: string,
+    onDown: () => void,
+  ): void {
+    const btn = this.add.rectangle(x, y, 138, 54, fill)
+      .setStrokeStyle(3, stroke)
+      .setInteractive({ useHandCursor: true });
+    this.add.text(x, y, label, {
+      fontFamily: "Manrope, sans-serif",
+      fontSize: "13px",
+      fontStyle: "bold",
+      color: textColor,
+    }).setOrigin(0.5);
+    btn.on("pointerover", () => this.tweens.add({ targets: btn, scaleX: 1.06, scaleY: 1.06, duration: 70 }));
+    btn.on("pointerout",  () => this.tweens.add({ targets: btn, scaleX: 1.0,  scaleY: 1.0,  duration: 70 }));
+    btn.on("pointerdown", onDown);
+  }
+
+  private tradeLabel(score: number): { label: string; emoji: string; color: number } {
+    if (score >= 85) return { label: "AMAZING TRADE!",     emoji: "🔥", color: 0xf472b6 };
+    if (score >= 70) return { label: "GREAT TRADE!",       emoji: "💖", color: 0x4ade80 };
+    if (score >= 50) return { label: "FAIR TRADE",         emoji: "😊", color: 0x60a5fa };
+    if (score >= 30) return { label: "NOT THE BEST...",    emoji: "😬", color: 0xfbbf24 };
+    return              { label: "TERRIBLE TRADE!",    emoji: "💀", color: 0xf87171 };
+  }
+
+  private tradeMessage(score: number): string {
+    if (score >= 85) return "You got way more than you gave! 🎉";
+    if (score >= 70) return "Nice deal — you came out ahead! ✨";
+    if (score >= 50) return "Pretty even trade. Not bad! 😊";
+    if (score >= 30) return "You gave more than you got... 😬";
+    return                  "Ouch. That was a rough deal! 💀";
   }
 
   private spawnConfetti(): void {
-    const emojis = ["🎊", "🎉", "✨", "💕", "🌸", "⭐"];
-    for (let i = 0; i < 18; i++) {
-      const e = emojis[i % emojis.length] ?? "✨";
+    const colors = [0xf472b6, 0xfbbf24, 0x4ade80, 0x60a5fa, 0xc084fc, 0xfde68a];
+    for (let i = 0; i < 28; i++) {
       const x = Math.random() * VW;
-      const t = this.add.text(x, -20, e, { fontSize: `${14 + Math.random() * 16}px` });
+      const c = this.add.rectangle(x, -20, 8 + Math.random() * 8, 8 + Math.random() * 8,
+        colors[Math.floor(Math.random() * colors.length)] ?? 0xf472b6);
       this.tweens.add({
-        targets: t,
-        y: VH + 40,
-        x: x + (Math.random() - 0.5) * 100,
-        angle: (Math.random() - 0.5) * 360,
-        duration: 1500 + Math.random() * 1500,
-        delay: Math.random() * 1000,
-        ease: "Cubic.easeIn",
-        onComplete: () => t.destroy(),
+        targets: c,
+        y: VH + 30,
+        x: x + (Math.random() - 0.5) * 120,
+        angle: Math.random() * 360,
+        duration: 1800 + Math.random() * 1200,
+        delay: Math.random() * 800,
+        ease: "Sine.easeIn",
+        onComplete: () => c.destroy(),
       });
     }
   }
@@ -841,42 +832,43 @@ class CollectionScene extends Phaser.Scene {
   }
 
   create(): void {
-    const collection = loadCollection();
-    this.onScore(collection.size);
+    const col = loadCollection();
+    this.onScore(col.size);
 
-    this.add.rectangle(VW / 2, VH / 2, VW, VH, 0xfdf2f8).setDepth(-10);
+    this.add.rectangle(VW / 2, VH / 2, VW, VH, 0xfdf2f8);
 
-    this.add.text(VW / 2, 40, "🎀 My Collection", {
+    this.add.text(VW / 2, 36, "🎀  My Collection", {
       fontFamily: "Fraunces, serif",
       fontSize: "26px",
       color: "#be185d",
     }).setOrigin(0.5);
-    this.add.text(VW / 2, 72, `${collection.size} / ${SQUISHIES.length} squishies`, {
+
+    this.add.text(VW / 2, 72, `${col.size} / ${SQUISHIES.length} squishies collected`, {
       fontFamily: "Manrope, sans-serif",
       fontSize: "13px",
-      color: "#6b7280",
+      color: "#9d174d",
     }).setOrigin(0.5);
 
     // Grid
-    const cols = 4;
-    const cellW = (VW - 32) / cols;
+    const cols  = 4;
+    const cellW = (VW - 24) / cols;
     const cellH = 90;
     const startY = 110;
 
-    SQUISHIES.forEach((sq, i) => {
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      const x = 16 + col * cellW + cellW / 2;
-      const y = startY + row * cellH + cellH / 2;
-      const owned = collection.has(sq.id);
-      const rarityColor = RARITY_COLORS[sq.rarity];
+    SQUISHIES.forEach((sq, idx) => {
+      const col2   = idx % cols;
+      const row    = Math.floor(idx / cols);
+      const cx     = 12 + col2 * cellW + cellW / 2;
+      const cy     = startY + row * cellH + cellH / 2;
+      const owned  = col.has(sq.id);
+      const rc     = RARITY_COLORS[sq.rarity];
 
-      const card = this.add.rectangle(x, y, cellW - 6, cellH - 6, owned ? 0xffffff : 0xf3f4f6, 1);
-      card.setStrokeStyle(2, owned ? rarityColor : 0xe5e7eb);
+      const card = this.add.rectangle(cx, cy, cellW - 6, cellH - 6, owned ? 0xffffff : 0xf3f4f6)
+        .setStrokeStyle(2, owned ? rc : 0xe5e7eb);
 
       if (owned) {
-        this.add.text(x, y - 18, sq.emoji, { fontSize: "22px" }).setOrigin(0.5);
-        this.add.text(x, y + 8, sq.name, {
+        this.add.text(cx, cy - 18, sq.emoji, { fontSize: "22px" }).setOrigin(0.5);
+        this.add.text(cx, cy + 10, sq.name, {
           fontFamily: "Manrope, sans-serif",
           fontSize: "8px",
           fontStyle: "bold",
@@ -884,24 +876,27 @@ class CollectionScene extends Phaser.Scene {
           wordWrap: { width: cellW - 10 },
           align: "center",
         }).setOrigin(0.5);
-        this.add.text(x, y + 24, sq.rarity, {
+        this.add.text(cx, cy + 26, sq.rarity, {
           fontFamily: "Manrope, sans-serif",
           fontSize: "7px",
-          color: `#${rarityColor.toString(16).padStart(6, "0")}`,
+          color: hexStr(rc),
         }).setOrigin(0.5);
 
-        if (rarityRank(sq.rarity) >= 2) {
+        // Gentle float for legendaries+
+        if (rarityRank(sq.rarity) >= 4) {
           this.tweens.add({
             targets: card,
-            alpha: 0.75,
-            duration: 800,
+            y: cy - 3,
+            duration: 900,
             yoyo: true,
             repeat: -1,
+            ease: "Sine.easeInOut",
           });
         }
       } else {
-        this.add.text(x, y - 8, "❓", { fontSize: "22px" }).setOrigin(0.5).setAlpha(0.3);
-        this.add.text(x, y + 18, "???", {
+        // Silhouette lock
+        this.add.text(cx, cy - 10, "❓", { fontSize: "22px", color: "#d1d5db" }).setOrigin(0.5);
+        this.add.text(cx, cy + 18, "???", {
           fontFamily: "Manrope, sans-serif",
           fontSize: "9px",
           color: "#d1d5db",
@@ -910,28 +905,27 @@ class CollectionScene extends Phaser.Scene {
     });
 
     // Back button
-    const backBtn = this.add.rectangle(VW / 2, VH - 40, 180, 50, 0xec4899, 1)
+    const back = this.add.rectangle(VW / 2, VH - 44, 180, 52, 0xec4899)
+      .setStrokeStyle(3, 0xbe185d)
       .setInteractive({ useHandCursor: true });
-    backBtn.setStrokeStyle(3, 0xbe185d);
-    this.add.text(VW / 2, VH - 40, "← Back to Menu", {
+    this.add.text(VW / 2, VH - 44, "← Back", {
       fontFamily: "Manrope, sans-serif",
-      fontSize: "14px",
+      fontSize: "18px",
       fontStyle: "bold",
       color: "#ffffff",
     }).setOrigin(0.5);
-
-    backBtn.on("pointerdown", () => {
-      this.cameras.main.fadeOut(200, 253, 242, 248);
+    back.on("pointerover", () => this.tweens.add({ targets: back, scaleX: 1.06, scaleY: 1.06, duration: 70 }));
+    back.on("pointerout",  () => this.tweens.add({ targets: back, scaleX: 1.0,  scaleY: 1.0,  duration: 70 }));
+    back.on("pointerdown", () => {
+      this.cameras.main.fadeOut(180, 253, 242, 248);
       this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("menu"));
     });
-    backBtn.on("pointerover", () => backBtn.setScale(1.05));
-    backBtn.on("pointerout", () => backBtn.setScale(1.0));
 
-    this.cameras.main.fadeIn(300, 253, 242, 248);
+    this.cameras.main.fadeIn(280, 253, 242, 248);
   }
 }
 
-// ─── Entry Point ─────────────────────────────────────────────────────────────
+// ─── Boot ─────────────────────────────────────────────────────────────────────
 
 export function startGame(parent: HTMLElement, onScore: (n: number) => void): () => void {
   const game = new Phaser.Game({
@@ -940,7 +934,6 @@ export function startGame(parent: HTMLElement, onScore: (n: number) => void): ()
     width: VW,
     height: VH,
     backgroundColor: "#fdf2f8",
-    transparent: false,
     scale: {
       mode: Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_BOTH,
