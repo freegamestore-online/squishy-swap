@@ -1,366 +1,276 @@
 import Phaser from "phaser";
 
-// ─── Constants ───────────────────────────────────────────────────────────────
 const VW = 480;
 const VH = 720;
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-type Rarity = "common" | "uncommon" | "rare" | "epic" | "legendary" | "ultrarare";
+// ─── Data ────────────────────────────────────────────────────────────────────
+
+type Rarity = "common" | "uncommon" | "rare" | "epic" | "legendary" | "ultra";
 
 interface Squishy {
   id: string;
   emoji: string;
   name: string;
   rarity: Rarity;
-  value: number; // base trade value
+  value: number;
 }
 
-interface ComputerPlayer {
-  name: string;
-  emoji: string;
-  color: number;
-  personality: "generous" | "fair" | "stingy" | "tricky";
-  speechAdd: string[];
-  speechReject: string[];
-  speechDeal: string[];
-}
-
-// ─── Data ────────────────────────────────────────────────────────────────────
 const SQUISHIES: Squishy[] = [
-  // Common (value 1–2)
-  { id: "strawberry",  emoji: "🍓", name: "Strawberry",   rarity: "common",    value: 1 },
-  { id: "donut",       emoji: "🍩", name: "Donut",         rarity: "common",    value: 1 },
-  { id: "cloud",       emoji: "☁️", name: "Cloud",         rarity: "common",    value: 1 },
-  { id: "lemon",       emoji: "🍋", name: "Lemon",         rarity: "common",    value: 2 },
-  { id: "cookie",      emoji: "🍪", name: "Cookie",        rarity: "common",    value: 2 },
-  { id: "cupcake",     emoji: "🧁", name: "Cupcake",       rarity: "common",    value: 2 },
-  // Uncommon (value 3–5)
-  { id: "cat",         emoji: "🐱", name: "Cat",           rarity: "uncommon",  value: 3 },
-  { id: "bunny",       emoji: "🐰", name: "Bunny",         rarity: "uncommon",  value: 4 },
-  { id: "bear",        emoji: "🐻", name: "Bear",          rarity: "uncommon",  value: 4 },
-  { id: "frog",        emoji: "🐸", name: "Frog",          rarity: "uncommon",  value: 3 },
-  { id: "duck",        emoji: "🐥", name: "Duck",          rarity: "uncommon",  value: 5 },
-  { id: "penguin",     emoji: "🐧", name: "Penguin",       rarity: "uncommon",  value: 5 },
-  // Rare (value 6–9)
-  { id: "unicorn",     emoji: "🦄", name: "Unicorn",       rarity: "rare",      value: 8 },
-  { id: "fox",         emoji: "🦊", name: "Fox",           rarity: "rare",      value: 7 },
-  { id: "axolotl",     emoji: "🦎", name: "Axolotl",       rarity: "rare",      value: 9 },
-  { id: "mushroom",    emoji: "🍄", name: "Mushroom",      rarity: "rare",      value: 6 },
-  // Epic (value 10–15)
-  { id: "dragon",      emoji: "🐉", name: "Dragon",        rarity: "epic",      value: 12 },
-  { id: "mermaid",     emoji: "🧜", name: "Mermaid",       rarity: "epic",      value: 14 },
-  { id: "rainbow",     emoji: "🌈", name: "Rainbow",       rarity: "epic",      value: 11 },
-  { id: "crystal",     emoji: "💎", name: "Crystal",       rarity: "epic",      value: 15 },
-  // Legendary (value 16–22)
-  { id: "phoenix",     emoji: "🔥", name: "Phoenix",       rarity: "legendary", value: 18 },
-  { id: "galaxy",      emoji: "🌌", name: "Galaxy",        rarity: "legendary", value: 20 },
-  { id: "crown",       emoji: "👑", name: "Crown",         rarity: "legendary", value: 22 },
-  // Ultra Rare (value 23+)
-  { id: "stardust",    emoji: "✨", name: "Stardust",      rarity: "ultrarare", value: 28 },
-  { id: "moonstone",   emoji: "🌙", name: "Moonstone",     rarity: "ultrarare", value: 30 },
-  { id: "heartgem",    emoji: "💖", name: "Heart Gem",     rarity: "ultrarare", value: 35 },
+  // Common
+  { id: "strawberry", emoji: "🍓", name: "Strawberry",  rarity: "common",    value: 10 },
+  { id: "donut",      emoji: "🍩", name: "Donut",       rarity: "common",    value: 10 },
+  { id: "cloud",      emoji: "☁️",  name: "Cloud",       rarity: "common",    value: 12 },
+  { id: "star",       emoji: "⭐",  name: "Star",        rarity: "common",    value: 11 },
+  { id: "mushroom",   emoji: "🍄", name: "Mushroom",    rarity: "common",    value: 13 },
+  // Uncommon
+  { id: "cat",        emoji: "🐱", name: "Cat",         rarity: "uncommon",  value: 25 },
+  { id: "bunny",      emoji: "🐰", name: "Bunny",       rarity: "uncommon",  value: 27 },
+  { id: "bear",       emoji: "🐻", name: "Bear",        rarity: "uncommon",  value: 26 },
+  { id: "frog",       emoji: "🐸", name: "Frog",        rarity: "uncommon",  value: 24 },
+  { id: "penguin",    emoji: "🐧", name: "Penguin",     rarity: "uncommon",  value: 28 },
+  // Rare
+  { id: "unicorn",    emoji: "🦄", name: "Unicorn",     rarity: "rare",      value: 55 },
+  { id: "dragon",     emoji: "🐉", name: "Dragon",      rarity: "rare",      value: 60 },
+  { id: "mermaid",    emoji: "🧜", name: "Mermaid",     rarity: "rare",      value: 58 },
+  { id: "phoenix",    emoji: "🦅", name: "Phoenix",     rarity: "rare",      value: 62 },
+  // Epic
+  { id: "rainbow",    emoji: "🌈", name: "Rainbow",     rarity: "epic",      value: 110 },
+  { id: "galaxy",     emoji: "🌌", name: "Galaxy",      rarity: "epic",      value: 120 },
+  { id: "crystal",    emoji: "💎", name: "Crystal",     rarity: "epic",      value: 115 },
+  // Legendary
+  { id: "crown",      emoji: "👑", name: "Crown",       rarity: "legendary", value: 220 },
+  { id: "comet",      emoji: "☄️",  name: "Comet",       rarity: "legendary", value: 240 },
+  // Ultra Rare
+  { id: "magic",      emoji: "✨", name: "Magic Spark", rarity: "ultra",     value: 500 },
+  { id: "angel",      emoji: "😇", name: "Angel",       rarity: "ultra",     value: 480 },
 ];
 
 const RARITY_COLORS: Record<Rarity, number> = {
-  common:    0xaaaaaa,
+  common:    0xa3a3a3,
   uncommon:  0x4ade80,
   rare:      0x60a5fa,
   epic:      0xa855f7,
   legendary: 0xfbbf24,
-  ultrarare: 0xf472b6,
+  ultra:     0xf43f5e,
 };
 
 const RARITY_LABELS: Record<Rarity, string> = {
   common:    "Common",
   uncommon:  "Uncommon",
-  rare:      "Rare ✦",
-  epic:      "Epic ✦✦",
-  legendary: "Legendary ✦✦✦",
-  ultrarare: "✨ Ultra Rare",
+  rare:      "Rare",
+  epic:      "Epic",
+  legendary: "Legendary",
+  ultra:     "✨ Ultra Rare",
 };
 
-const COMPUTER_PLAYERS: ComputerPlayer[] = [
-  {
-    name: "Mochi",
-    emoji: "🐱",
-    color: 0xfda4af,
-    personality: "generous",
-    speechAdd:    ["Okay! I'll add one more~ 💕", "Sure! Here you go! 🎀", "Anything for a trade! ✨"],
-    speechReject: ["Aww... okay then! 😿", "Nooo come back! 🐾", "Fine... see ya! 😢"],
-    speechDeal:   ["Deal? Deal?! 🥺", "Please trade with me! 💖", "I really want that one! 🎀"],
-  },
-  {
-    name: "Pudding",
-    emoji: "🍮",
-    color: 0xfde68a,
-    personality: "fair",
-    speechAdd:    ["Hmm... I could add something! 🤔", "Let me check my bag... 🎒", "Okay, one more! 😊"],
-    speechReject: ["Fair enough! 😌", "Worth a shot! 👍", "Good luck out there! 🌟"],
-    speechDeal:   ["Seems fair to me! 😊", "What do you think? 🤗", "A good deal for both! 💫"],
-  },
-  {
-    name: "Boba",
-    emoji: "🧋",
-    color: 0xc4b5fd,
-    personality: "stingy",
-    speechAdd:    ["Ugh... fiiiine. 😒", "This is my last one! 😤", "Don't push it... 😑"],
-    speechReject: ["Whatever! 🙄", "Your loss! 😤", "Fine! Maybe someone else! 💢"],
-    speechDeal:   ["Take it or leave it! 😏", "Best offer you'll get! 😤", "This is already generous! 🙄"],
-  },
-  {
-    name: "Sprinkle",
-    emoji: "🍬",
-    color: 0x86efac,
-    personality: "tricky",
-    speechAdd:    ["Ooh! Sneaky add! 🎭", "Surprise! ✨", "Hehe, how about THIS! 🎪"],
-    speechReject: ["You're sharp! 🦊", "I almost had you! 😜", "Onto the next one~! 🌀"],
-    speechDeal:   ["Hehe, deal? 😈", "Trust me on this one~ 🎭", "It's a good deal, I promise! 😇"],
-  },
-  {
-    name: "Marshmallow",
-    emoji: "☁️",
-    color: 0xe0f2fe,
-    personality: "generous",
-    speechAdd:    ["Of course! Here's more! 🌸", "I have lots to share! 💝", "Take it, it's yours! 🎁"],
-    speechReject: ["Oh no! 😱 Please reconsider!", "I'll miss you! 🥹", "Come back anytime! 💕"],
-    speechDeal:   ["I really love that squishy! 🥰", "Please? It would make me so happy! ☁️", "Best friends trade! 💞"],
-  },
+const BG_COLOR = 0xfdf4ff;
+const ACCENT = 0xd946ef;
+
+interface Trader {
+  name: string;
+  avatar: string;
+  personality: "generous" | "fair" | "stingy";
+  speechAdd: string;
+  speechDeal: string;
+  speechReject: string;
+}
+
+const TRADERS: Trader[] = [
+  { name: "Mochi",  avatar: "🐱", personality: "generous", speechAdd: "Sure! Here's more! 🎀", speechDeal: "Deal? Pleaseee! 🥺",    speechReject: "Aww okay... bye! 😿" },
+  { name: "Boba",   avatar: "🐰", personality: "fair",     speechAdd: "Hmm, okay! One more~",   speechDeal: "Wanna trade? 💕",       speechReject: "Fine! Your loss! 😤" },
+  { name: "Coco",   avatar: "🐸", personality: "stingy",   speechAdd: "Ugh... fine! 😒",        speechDeal: "Take it or leave it!",  speechReject: "Whatever! 🙄" },
+  { name: "Lumi",   avatar: "🦄", personality: "generous", speechAdd: "I'll add something! ✨",  speechDeal: "Best deal ever! 🌟",    speechReject: "Okay, next time! 🌸" },
+  { name: "Starr",  avatar: "⭐", personality: "fair",     speechAdd: "One more! Just for you", speechDeal: "Let's trade! 🤝",       speechReject: "Alright, moving on!" },
+  { name: "Dreamy", avatar: "🌙", personality: "stingy",   speechAdd: "...okay, one more. 😑",  speechDeal: "This is my best offer", speechReject: "Good riddance! 😤"  },
 ];
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-function pick<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)] as T;
+function rand<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)]!;
 }
 
-function pickN<T>(arr: T[], n: number): T[] {
-  const copy = [...arr];
-  const result: T[] = [];
-  for (let i = 0; i < n && copy.length; i++) {
-    const idx = Math.floor(Math.random() * copy.length);
-    result.push(copy.splice(idx, 1)[0] as T);
+function weightedRandom(): Squishy {
+  const weights: Record<Rarity, number> = {
+    common: 40, uncommon: 28, rare: 18, epic: 9, legendary: 4, ultra: 1,
+  };
+  const pool: Squishy[] = [];
+  for (const s of SQUISHIES) {
+    const w = weights[s.rarity];
+    for (let i = 0; i < w; i++) pool.push(s);
   }
-  return result;
-}
-
-function squishyValue(sq: Squishy): number {
-  return sq.value;
+  return rand(pool);
 }
 
 function totalValue(squishies: Squishy[]): number {
-  return squishies.reduce((s, sq) => s + squishyValue(sq), 0);
+  return squishies.reduce((s, q) => s + q.value, 0);
 }
 
-function tradeScore(given: Squishy, received: Squishy[]): number {
-  const gv = squishyValue(given);
-  const rv = totalValue(received);
-  if (gv === 0) return 50;
-  const ratio = rv / gv;
-  // ratio > 1 = good deal, < 1 = bad deal
-  const score = Math.round(Math.min(100, Math.max(0, 50 + (ratio - 1) * 40)));
-  return score;
+function tradeScore(gave: Squishy, received: Squishy[]): number {
+  const ratio = totalValue(received) / gave.value;
+  return Math.round(Math.min(100, Math.max(0, ratio * 50)));
 }
 
-function tradeLabel(score: number): { label: string; emoji: string; color: string } {
-  if (score >= 90) return { label: "AMAZING TRADE!", emoji: "🔥", color: "#f472b6" };
-  if (score >= 70) return { label: "GREAT TRADE!",   emoji: "💖", color: "#a855f7" };
-  if (score >= 50) return { label: "FAIR TRADE",     emoji: "😊", color: "#4ade80" };
-  if (score >= 30) return { label: "NOT THE BEST",   emoji: "😬", color: "#fbbf24" };
-  return              { label: "TERRIBLE TRADE!",    emoji: "💀", color: "#ef4444" };
+function tradeRating(score: number): { label: string; emoji: string; color: string } {
+  if (score >= 90) return { label: "AMAZING TRADE!", emoji: "🔥", color: "#ef4444" };
+  if (score >= 70) return { label: "GREAT TRADE!",   emoji: "💖", color: "#ec4899" };
+  if (score >= 50) return { label: "FAIR TRADE",     emoji: "😊", color: "#22c55e" };
+  if (score >= 30) return { label: "NOT THE BEST",   emoji: "😬", color: "#f59e0b" };
+  return                  { label: "TERRIBLE TRADE!",emoji: "💀", color: "#6b7280" };
 }
 
-function getInitialCollection(): string[] {
+// ─── Persistence ─────────────────────────────────────────────────────────────
+
+function loadCollection(): Set<string> {
   try {
     const raw = localStorage.getItem("squishyswap_collection");
-    if (raw) return JSON.parse(raw) as string[];
+    if (raw) return new Set(JSON.parse(raw) as string[]);
   } catch { /* ignore */ }
-  // Start with 3 random common squishies
-  return pickN(SQUISHIES.filter(s => s.rarity === "common"), 3).map(s => s.id);
+  return new Set<string>();
 }
 
-function saveCollection(ids: string[]): void {
+function saveCollection(col: Set<string>): void {
+  localStorage.setItem("squishyswap_collection", JSON.stringify([...col]));
+}
+
+function loadInventory(): Squishy[] {
   try {
-    localStorage.setItem("squishyswap_collection", JSON.stringify(ids));
+    const raw = localStorage.getItem("squishyswap_inventory");
+    if (raw) {
+      const ids = JSON.parse(raw) as string[];
+      const result: Squishy[] = [];
+      for (const id of ids) {
+        const s = SQUISHIES.find(q => q.id === id);
+        if (s) result.push(s);
+      }
+      if (result.length > 0) return result;
+    }
   } catch { /* ignore */ }
+  return [
+    SQUISHIES.find(q => q.id === "strawberry")!,
+    SQUISHIES.find(q => q.id === "donut")!,
+    SQUISHIES.find(q => q.id === "cloud")!,
+  ];
 }
 
-function getStartingSquishy(collection: string[]): Squishy {
-  const owned = SQUISHIES.filter(s => collection.includes(s.id));
-  if (owned.length === 0) return SQUISHIES[0]!;
-  return pick(owned);
+function saveInventory(inv: Squishy[]): void {
+  localStorage.setItem("squishyswap_inventory", JSON.stringify(inv.map(s => s.id)));
 }
 
-// Generate computer offer based on personality
-function generateOffer(computer: ComputerPlayer, yourSquishy: Squishy, count: number): Squishy[] {
-  const yourValue = squishyValue(yourSquishy);
-  let targetValue: number;
-  switch (computer.personality) {
-    case "generous": targetValue = yourValue * (0.9 + Math.random() * 0.6); break;
-    case "fair":     targetValue = yourValue * (0.7 + Math.random() * 0.5); break;
-    case "stingy":   targetValue = yourValue * (0.3 + Math.random() * 0.4); break;
-    case "tricky":   targetValue = yourValue * (0.5 + Math.random() * 0.8); break;
-  }
-  // Pick squishies whose combined value is close to targetValue
-  const pool = SQUISHIES.filter(s => s.id !== yourSquishy.id);
-  const result: Squishy[] = [];
-  let remaining = targetValue;
-  for (let i = 0; i < count; i++) {
-    const candidates = pool.filter(s => !result.includes(s) && s.value <= Math.max(1, remaining + 3));
-    if (candidates.length === 0) break;
-    const chosen = pick(candidates);
-    result.push(chosen);
-    remaining -= chosen.value;
-  }
-  // If we got nothing, add a random one
-  if (result.length === 0) result.push(pick(pool));
-  return result;
-}
+// ─── Shared state ─────────────────────────────────────────────────────────────
 
-// ─── Scenes ──────────────────────────────────────────────────────────────────
-
-// Shared game state passed between scenes
-interface GameState {
+interface SharedState {
   onScore: (n: number) => void;
-  collection: string[];
-  yourSquishy: Squishy;
-  tradeResult?: { given: Squishy; received: Squishy[]; score: number };
+  inventory: Squishy[];
+  collection: Set<string>;
+  tradesCompleted: number;
 }
 
-// ─── MENU SCENE ──────────────────────────────────────────────────────────────
-class MenuScene extends Phaser.Scene {
-  private state!: GameState;
+// ─── MenuScene ────────────────────────────────────────────────────────────────
 
-  constructor() { super("Menu"); }
+class MenuScene extends Phaser.Scene {
+  private shared!: SharedState;
+
+  constructor() { super("menu"); }
 
   init(data: object): void {
-    this.state = data as GameState;
+    this.shared = data as SharedState;
   }
 
   create(): void {
-    this.cameras.main.setBackgroundColor("#fdf2f8");
+    const W = this.scale.width;
+    const H = this.scale.height;
 
-    // Pastel gradient bg
-    const bg = this.add.graphics();
-    bg.fillGradientStyle(0xfce7f3, 0xfce7f3, 0xede9fe, 0xede9fe, 1);
-    bg.fillRect(0, 0, VW, VH);
-
-    // Floating sparkles
+    this.add.rectangle(W / 2, H / 2, W, H, BG_COLOR);
     this.spawnSparkles();
 
     // Title
-    this.add.text(VW / 2, 120, "✨", { fontSize: "64px" }).setOrigin(0.5);
-    this.add.text(VW / 2, 200, "Squishy Swap!", {
+    this.add.text(W / 2, 100, "✨", { fontSize: "52px" }).setOrigin(0.5);
+    this.add.text(W / 2, 160, "Squishy Swap!", {
       fontFamily: "Fraunces, serif",
-      fontSize: "42px",
-      color: "#be185d",
-      stroke: "#ffffff",
-      strokeThickness: 4,
-    }).setOrigin(0.5);
-    this.add.text(VW / 2, 250, "Collect & Trade Cute Squishies!", {
-      fontFamily: "Manrope, sans-serif",
-      fontSize: "16px",
-      color: "#9d174d",
-    }).setOrigin(0.5);
-
-    // Show collection count
-    const count = this.state.collection.length;
-    const total = SQUISHIES.length;
-    this.add.text(VW / 2, 300, `🎀 Collection: ${count} / ${total}`, {
-      fontFamily: "Manrope, sans-serif",
-      fontSize: "18px",
+      fontSize: "38px",
       color: "#7c3aed",
-      backgroundColor: "#f5f3ff",
-      padding: { x: 16, y: 8 },
-    }).setOrigin(0.5).setAlpha(0.9);
-
-    // Current squishy preview
-    const sq = this.state.yourSquishy;
-    this.drawSquishyCard(VW / 2, 400, sq, true);
-
-    // Play button
-    const playBtn = this.add.text(VW / 2, 530, "  START TRADING  ", {
-      fontFamily: "Manrope, sans-serif",
-      fontSize: "22px",
       fontStyle: "bold",
-      color: "#ffffff",
-      backgroundColor: "#ec4899",
-      padding: { x: 24, y: 14 },
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-
-    playBtn.on("pointerover", () => playBtn.setBackgroundColor("#db2777"));
-    playBtn.on("pointerout",  () => playBtn.setBackgroundColor("#ec4899"));
-    playBtn.on("pointerdown", () => {
-      this.cameras.main.fadeOut(300, 0, 0, 0);
-      this.time.delayedCall(300, () => {
-        this.scene.start("Trade", this.state);
-      });
-    });
-
-    // Collection button
-    const colBtn = this.add.text(VW / 2, 600, "  📦 My Collection  ", {
-      fontFamily: "Manrope, sans-serif",
-      fontSize: "17px",
-      color: "#7c3aed",
-      backgroundColor: "#ede9fe",
-      padding: { x: 20, y: 10 },
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-
-    colBtn.on("pointerover", () => colBtn.setBackgroundColor("#ddd6fe"));
-    colBtn.on("pointerout",  () => colBtn.setBackgroundColor("#ede9fe"));
-    colBtn.on("pointerdown", () => {
-      this.cameras.main.fadeOut(300, 0, 0, 0);
-      this.time.delayedCall(300, () => {
-        this.scene.start("Collection", this.state);
-      });
-    });
-
-    this.cameras.main.fadeIn(400);
-  }
-
-  private drawSquishyCard(x: number, y: number, sq: Squishy, animate: boolean): void {
-    const rarColor = RARITY_COLORS[sq.rarity];
-    const card = this.add.rectangle(x, y, 160, 120, 0xffffff, 0.9)
-      .setStrokeStyle(3, rarColor);
-
-    this.add.text(x, y - 20, sq.emoji, { fontSize: "40px" }).setOrigin(0.5);
-    this.add.text(x, y + 22, sq.name, {
-      fontFamily: "Manrope, sans-serif",
-      fontSize: "14px",
-      fontStyle: "bold",
-      color: "#1e1b4b",
     }).setOrigin(0.5);
-    this.add.text(x, y + 42, RARITY_LABELS[sq.rarity], {
+    this.add.text(W / 2, 205, "Collect & Trade Cute Squishies", {
       fontFamily: "Manrope, sans-serif",
-      fontSize: "11px",
-      color: "#" + rarColor.toString(16).padStart(6, "0"),
+      fontSize: "15px",
+      color: "#9333ea",
     }).setOrigin(0.5);
 
-    if (animate) {
+    const inv = this.shared.inventory;
+    const col = this.shared.collection;
+    this.add.text(W / 2, 248, `🎒 ${inv.length} squishies  •  📦 ${col.size}/${SQUISHIES.length} collected`, {
+      fontFamily: "Manrope, sans-serif",
+      fontSize: "13px",
+      color: "#a855f7",
+    }).setOrigin(0.5);
+
+    // Inventory preview
+    const previewY = 318;
+    const shown = inv.slice(0, 5);
+    const spacing = Math.min(60, (W - 80) / Math.max(shown.length, 1));
+    const startX = W / 2 - (spacing * (shown.length - 1)) / 2;
+    shown.forEach((sq, i) => {
+      const x = startX + i * spacing;
+      const bg = this.add.circle(x, previewY, 28, RARITY_COLORS[sq.rarity], 0.2);
+      this.add.circle(x, previewY, 26, 0xffffff);
+      this.add.text(x, previewY, sq.emoji, { fontSize: "26px" }).setOrigin(0.5);
       this.tweens.add({
-        targets: card,
-        scaleX: 1.04,
-        scaleY: 1.04,
-        duration: 900,
+        targets: bg,
+        scaleX: 1.1, scaleY: 1.1,
+        duration: 900 + i * 120,
         yoyo: true,
         repeat: -1,
         ease: "Sine.easeInOut",
       });
-    }
+    });
+
+    // Buttons
+    this.makeRoundBtn(W / 2, 420, "🤝  START TRADING", 0x7c3aed, () => {
+      this.cameras.main.fadeOut(200, 253, 244, 255);
+      this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("trade", this.shared));
+    });
+
+    this.makeRoundBtn(W / 2, 496, "🎀  MY COLLECTION", 0xec4899, () => {
+      this.cameras.main.fadeOut(200, 253, 244, 255);
+      this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("collection", this.shared));
+    });
+
+    this.cameras.main.fadeIn(300, 253, 244, 255);
+  }
+
+  private makeRoundBtn(x: number, y: number, label: string, color: number, cb: () => void): void {
+    const gfx = this.add.graphics();
+    gfx.fillStyle(color, 1);
+    gfx.fillRoundedRect(x - 130, y - 26, 260, 52, 26);
+    const txt = this.add.text(x, y, label, {
+      fontFamily: "Manrope, sans-serif",
+      fontSize: "16px",
+      fontStyle: "bold",
+      color: "#ffffff",
+    }).setOrigin(0.5);
+    const hit = this.add.rectangle(x, y, 260, 52, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerdown", cb);
+    hit.on("pointerover", () => this.tweens.add({ targets: [gfx, txt], scaleX: 1.05, scaleY: 1.05, duration: 80 }));
+    hit.on("pointerout",  () => this.tweens.add({ targets: [gfx, txt], scaleX: 1,    scaleY: 1,    duration: 80 }));
   }
 
   private spawnSparkles(): void {
-    for (let i = 0; i < 18; i++) {
-      const x = Math.random() * VW;
-      const y = Math.random() * VH;
-      const star = this.add.text(x, y, pick(["✦", "✧", "⋆", "✨", "🌸"]), {
-        fontSize: `${10 + Math.random() * 16}px`,
+    const W = this.scale.width;
+    const H = this.scale.height;
+    const emojis = ["✨", "⭐", "💫", "🌟", "💕"];
+    for (let i = 0; i < 12; i++) {
+      const x = Phaser.Math.Between(20, W - 20);
+      const y = Phaser.Math.Between(20, H - 20);
+      const t = this.add.text(x, y, rand(emojis), {
+        fontSize: `${Phaser.Math.Between(10, 22)}px`,
         alpha: 0,
-      });
+      }).setOrigin(0.5);
       this.tweens.add({
-        targets: star,
-        alpha: { from: 0, to: 0.7 },
-        y: y - 30 - Math.random() * 40,
-        duration: 1500 + Math.random() * 2000,
-        delay: Math.random() * 2000,
+        targets: t,
+        alpha: { from: 0, to: 0.6 },
+        y: y - Phaser.Math.Between(20, 50),
+        duration: Phaser.Math.Between(1500, 3000),
+        delay: Phaser.Math.Between(0, 2000),
         yoyo: true,
         repeat: -1,
         ease: "Sine.easeInOut",
@@ -369,669 +279,646 @@ class MenuScene extends Phaser.Scene {
   }
 }
 
-// ─── TRADE SCENE ─────────────────────────────────────────────────────────────
-class TradeScene extends Phaser.Scene {
-  private state!: GameState;
-  private computer!: ComputerPlayer;
-  private offer: Squishy[] = [];
-  private computerIndex = 0;
-  private offerContainer!: Phaser.GameObjects.Container;
-  private speechBubble!: Phaser.GameObjects.Text;
-  private speechBg!: Phaser.GameObjects.Rectangle;
-  private addCount = 0;
+// ─── TradeScene ───────────────────────────────────────────────────────────────
 
-  constructor() { super("Trade"); }
+class TradeScene extends Phaser.Scene {
+  private shared!: SharedState;
+  private mySquishyIndex = 0;
+  private trader!: Trader;
+  private traderIndex = 0;
+  private offer: Squishy[] = [];
+  private speechText!: Phaser.GameObjects.Text;
+  private offerContainer!: Phaser.GameObjects.Container;
+  private addCount = 0;
+  private readonly MAX_OFFER = 4;
+
+  constructor() { super("trade"); }
 
   init(data: object): void {
-    this.state = data as GameState;
-    this.computerIndex = 0;
-    this.addCount = 0;
+    this.shared = data as SharedState;
   }
 
   create(): void {
-    this.cameras.main.setBackgroundColor("#fdf4ff");
-    this.drawBackground();
-    this.loadNextComputer();
-    this.cameras.main.fadeIn(350);
-  }
+    const W = this.scale.width;
 
-  private drawBackground(): void {
-    const bg = this.add.graphics();
-    bg.fillGradientStyle(0xfdf4ff, 0xfdf4ff, 0xfce7f3, 0xfce7f3, 1);
-    bg.fillRect(0, 0, VW, VH);
+    this.add.rectangle(W / 2, this.scale.height / 2, W, this.scale.height, BG_COLOR);
 
-    // Decorative circles
-    const deco = this.add.graphics();
-    deco.fillStyle(0xfce7f3, 0.4);
-    deco.fillCircle(-40, 80, 120);
-    deco.fillStyle(0xede9fe, 0.4);
-    deco.fillCircle(VW + 40, VH - 100, 140);
-  }
-
-  private loadNextComputer(): void {
-    this.children.removeAll(true);
-    this.drawBackground();
-    this.addCount = 0;
-
-    if (this.computerIndex >= COMPUTER_PLAYERS.length) {
-      // All computers done — back to menu
-      this.cameras.main.fadeOut(300, 0, 0, 0);
-      this.time.delayedCall(300, () => {
-        this.state.yourSquishy = getStartingSquishy(this.state.collection);
-        this.scene.start("Menu", this.state);
-      });
-      return;
+    const inv = this.shared.inventory;
+    if (inv.length === 0) {
+      inv.push(weightedRandom());
+      saveInventory(inv);
     }
+    this.mySquishyIndex = Math.floor(Math.random() * inv.length);
+    this.traderIndex = Math.floor(Math.random() * TRADERS.length);
+    this.trader = TRADERS[this.traderIndex]!;
+    this.addCount = 0;
+    this.offer = this.buildOffer(1);
 
-    this.computer = COMPUTER_PLAYERS[this.computerIndex]!;
-    this.offer = generateOffer(this.computer, this.state.yourSquishy, 2);
-
-    this.drawHeader();
-    this.drawYourSquishy();
-    this.drawComputer();
-    this.drawOffer();
-    this.drawButtons();
-    this.showSpeech(pick(this.computer.speechDeal));
+    this.buildUI();
+    this.cameras.main.fadeIn(300, 253, 244, 255);
   }
 
-  private drawHeader(): void {
-    this.add.text(VW / 2, 24, `Trader ${this.computerIndex + 1} of ${COMPUTER_PLAYERS.length}`, {
-      fontFamily: "Manrope, sans-serif",
-      fontSize: "13px",
-      color: "#9d174d",
-    }).setOrigin(0.5);
+  private buildOffer(count: number): Squishy[] {
+    const myVal = this.shared.inventory[this.mySquishyIndex]?.value ?? 10;
+    const result: Squishy[] = [];
+    for (let i = 0; i < count; i++) {
+      let s = weightedRandom();
+      for (let attempt = 0; attempt < 8; attempt++) {
+        if (result.some(r => r.id === s.id)) {
+          s = weightedRandom();
+        } else {
+          break;
+        }
+      }
+      // Bias by personality
+      if (this.trader.personality === "generous" && s.value < myVal * 0.4) s = weightedRandom();
+      if (this.trader.personality === "stingy"   && s.value > myVal * 1.2) s = weightedRandom();
+      result.push(s);
+    }
+    return result;
+  }
 
-    this.add.text(VW / 2, 48, "✨ Trade Time! ✨", {
+  private buildUI(): void {
+    const W = this.scale.width;
+    const inv = this.shared.inventory;
+    const mySquishy = inv[this.mySquishyIndex] ?? inv[0]!;
+    const halfW = (W - 40) / 2;
+
+    // Header
+    this.add.text(W / 2, 28, "🤝 TRADE TIME!", {
       fontFamily: "Fraunces, serif",
-      fontSize: "26px",
-      color: "#be185d",
+      fontSize: "24px",
+      color: "#7c3aed",
+      fontStyle: "bold",
     }).setOrigin(0.5);
-  }
 
-  private drawYourSquishy(): void {
-    const sq = this.state.yourSquishy;
-    this.add.text(30, 88, "YOUR SQUISHY", {
+    // My squishy panel
+    const myGfx = this.add.graphics();
+    myGfx.fillStyle(0xffffff, 1);
+    myGfx.fillRoundedRect(16, 55, halfW, 140, 16);
+    myGfx.lineStyle(2, RARITY_COLORS[mySquishy.rarity], 1);
+    myGfx.strokeRoundedRect(16, 55, halfW, 140, 16);
+
+    this.add.text(16 + halfW / 2, 72, "YOUR SQUISHY", {
       fontFamily: "Manrope, sans-serif",
       fontSize: "11px",
       fontStyle: "bold",
-      color: "#6b7280",
-    });
-
-    const rarColor = RARITY_COLORS[sq.rarity];
-    const card = this.add.rectangle(100, 150, 140, 110, 0xffffff, 0.95)
-      .setStrokeStyle(3, rarColor);
-    this.tweens.add({
-      targets: card,
-      scaleX: 1.03, scaleY: 1.03,
-      duration: 1000, yoyo: true, repeat: -1, ease: "Sine.easeInOut",
-    });
-
-    this.add.text(100, 128, sq.emoji, { fontSize: "34px" }).setOrigin(0.5);
-    this.add.text(100, 162, sq.name, {
-      fontFamily: "Manrope, sans-serif", fontSize: "12px", fontStyle: "bold", color: "#1e1b4b",
-    }).setOrigin(0.5);
-    this.add.text(100, 178, RARITY_LABELS[sq.rarity], {
-      fontFamily: "Manrope, sans-serif", fontSize: "10px",
-      color: "#" + rarColor.toString(16).padStart(6, "0"),
+      color: "#9ca3af",
     }).setOrigin(0.5);
 
-    // Sparkles for rare+
-    if (["rare","epic","legendary","ultrarare"].includes(sq.rarity)) {
-      this.spawnCardSparkles(100, 150);
-    }
+    const myEmoji = this.add.text(16 + halfW / 2, 118, mySquishy.emoji, { fontSize: "44px" }).setOrigin(0.5);
+    this.tweens.add({ targets: myEmoji, scaleX: 1.08, scaleY: 1.08, duration: 800, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+
+    this.add.text(16 + halfW / 2, 158, mySquishy.name, {
+      fontFamily: "Manrope, sans-serif",
+      fontSize: "13px",
+      fontStyle: "bold",
+      color: "#374151",
+    }).setOrigin(0.5);
+    this.add.text(16 + halfW / 2, 176, RARITY_LABELS[mySquishy.rarity], {
+      fontFamily: "Manrope, sans-serif",
+      fontSize: "10px",
+      color: `#${RARITY_COLORS[mySquishy.rarity].toString(16).padStart(6, "0")}`,
+    }).setOrigin(0.5);
+
+    // Trader panel
+    const tGfx = this.add.graphics();
+    tGfx.fillStyle(0xffffff, 1);
+    tGfx.fillRoundedRect(W / 2 + 4, 55, halfW, 140, 16);
+
+    this.add.text(W / 2 + 4 + halfW / 2, 72, "TRADER", {
+      fontFamily: "Manrope, sans-serif",
+      fontSize: "11px",
+      fontStyle: "bold",
+      color: "#9ca3af",
+    }).setOrigin(0.5);
+
+    const avatar = this.add.text(W / 2 + 4 + halfW / 2, 118, this.trader.avatar, { fontSize: "44px" }).setOrigin(0.5);
+    this.tweens.add({ targets: avatar, y: 112, duration: 700, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+
+    this.add.text(W / 2 + 4 + halfW / 2, 158, this.trader.name, {
+      fontFamily: "Manrope, sans-serif",
+      fontSize: "13px",
+      fontStyle: "bold",
+      color: "#374151",
+    }).setOrigin(0.5);
+
+    // Speech bubble
+    const bubbleGfx = this.add.graphics();
+    bubbleGfx.fillStyle(0xf3e8ff, 1);
+    bubbleGfx.fillRoundedRect(20, 210, W - 40, 44, 12);
+    this.speechText = this.add.text(W / 2, 232, this.trader.speechDeal, {
+      fontFamily: "Manrope, sans-serif",
+      fontSize: "14px",
+      color: "#7c3aed",
+    }).setOrigin(0.5);
+
+    // Offer label
+    this.add.text(W / 2, 272, `${this.trader.name.toUpperCase()} OFFERS`, {
+      fontFamily: "Manrope, sans-serif",
+      fontSize: "12px",
+      fontStyle: "bold",
+      color: "#9ca3af",
+    }).setOrigin(0.5);
+
+    // Offer items
+    this.offerContainer = this.add.container(W / 2, 360);
+    this.renderOffer();
+
+    // Action buttons
+    this.buildButtons();
   }
 
-  private drawComputer(): void {
-    const cp = this.computer;
-    const hexColor = "#" + cp.color.toString(16).padStart(6, "0");
-
-    // Computer avatar
-    const bubble = this.add.circle(VW - 80, 150, 44, cp.color, 0.85)
-      .setStrokeStyle(3, 0xffffff);
-    this.tweens.add({
-      targets: bubble,
-      scaleX: 1.06, scaleY: 1.06,
-      duration: 800, yoyo: true, repeat: -1, ease: "Sine.easeInOut",
-    });
-    this.add.text(VW - 80, 150, cp.emoji, { fontSize: "36px" }).setOrigin(0.5);
-    this.add.text(VW - 80, 202, cp.name, {
-      fontFamily: "Manrope, sans-serif", fontSize: "13px", fontStyle: "bold",
-      color: hexColor,
-    }).setOrigin(0.5);
-
-    // Speech bubble (will be updated)
-    this.speechBg = this.add.rectangle(VW / 2, 240, 300, 44, 0xffffff, 0.9)
-      .setStrokeStyle(2, cp.color);
-    this.speechBubble = this.add.text(VW / 2, 240, "", {
-      fontFamily: "Manrope, sans-serif", fontSize: "13px", color: "#374151",
-      wordWrap: { width: 270 },
-    }).setOrigin(0.5);
-  }
-
-  private showSpeech(text: string): void {
-    this.speechBubble.setText(text);
-    this.tweens.add({
-      targets: [this.speechBg, this.speechBubble],
-      scaleX: { from: 0.8, to: 1 },
-      scaleY: { from: 0.8, to: 1 },
-      alpha: { from: 0, to: 1 },
-      duration: 300,
-      ease: "Back.easeOut",
-    });
-  }
-
-  private drawOffer(): void {
-    this.offerContainer?.destroy();
-    this.offerContainer = this.add.container(0, 0);
-
-    this.add.text(VW / 2, 270, `${this.computer.name.toUpperCase()} OFFERS`, {
-      fontFamily: "Manrope, sans-serif", fontSize: "11px", fontStyle: "bold", color: "#6b7280",
-    }).setOrigin(0.5);
-
-    const offerY = 370;
-    const spacing = Math.min(130, (VW - 40) / this.offer.length);
-    const startX = VW / 2 - ((this.offer.length - 1) * spacing) / 2;
+  private renderOffer(): void {
+    this.offerContainer.removeAll(true);
+    const W = this.scale.width;
+    const n = this.offer.length;
+    const spacing = Math.min(80, (W - 60) / Math.max(n, 1));
+    const startX = -(spacing * (n - 1)) / 2;
 
     this.offer.forEach((sq, i) => {
       const x = startX + i * spacing;
-      const rarColor = RARITY_COLORS[sq.rarity];
+      const gfx = this.add.graphics();
+      gfx.fillStyle(RARITY_COLORS[sq.rarity], 0.15);
+      gfx.fillCircle(x, 0, 32);
+      gfx.lineStyle(2, RARITY_COLORS[sq.rarity], 0.8);
+      gfx.strokeCircle(x, 0, 32);
 
-      const card = this.add.rectangle(x, offerY, 110, 90, 0xffffff, 0.95)
-        .setStrokeStyle(2, rarColor);
-      this.offerContainer.add(card);
-
-      const emoji = this.add.text(x, offerY - 18, sq.emoji, { fontSize: "28px" }).setOrigin(0.5);
-      this.offerContainer.add(emoji);
-
-      const name = this.add.text(x, offerY + 16, sq.name, {
-        fontFamily: "Manrope, sans-serif", fontSize: "11px", fontStyle: "bold", color: "#1e1b4b",
+      const emojiT = this.add.text(x, 0, sq.emoji, { fontSize: "30px" }).setOrigin(0.5);
+      const nameT = this.add.text(x, 40, sq.name, {
+        fontFamily: "Manrope, sans-serif",
+        fontSize: "10px",
+        fontStyle: "bold",
+        color: "#374151",
       }).setOrigin(0.5);
-      this.offerContainer.add(name);
-
-      const rar = this.add.text(x, offerY + 30, RARITY_LABELS[sq.rarity], {
-        fontFamily: "Manrope, sans-serif", fontSize: "9px",
-        color: "#" + rarColor.toString(16).padStart(6, "0"),
+      const rarT = this.add.text(x, 54, RARITY_LABELS[sq.rarity], {
+        fontFamily: "Manrope, sans-serif",
+        fontSize: "9px",
+        color: `#${RARITY_COLORS[sq.rarity].toString(16).padStart(6, "0")}`,
       }).setOrigin(0.5);
-      this.offerContainer.add(rar);
 
-      // Bounce in
+      this.offerContainer.add([gfx, emojiT, nameT, rarT]);
+
       this.tweens.add({
-        targets: [card, emoji, name, rar],
-        y: `-=8`,
-        duration: 600 + i * 100,
+        targets: emojiT,
+        scaleX: 1.12, scaleY: 1.12,
+        duration: 700 + i * 100,
         yoyo: true,
         repeat: -1,
         ease: "Sine.easeInOut",
-        delay: i * 200,
       });
 
-      // Sparkles for rare+
-      if (["rare","epic","legendary","ultrarare"].includes(sq.rarity)) {
-        this.spawnCardSparkles(x, offerY);
+      if (sq.rarity === "epic" || sq.rarity === "legendary" || sq.rarity === "ultra") {
+        this.time.addEvent({
+          delay: 500 + i * 200,
+          loop: true,
+          callback: () => {
+            if (!this.offerContainer?.active) return;
+            const sx = x + Phaser.Math.Between(-28, 28);
+            const sy = Phaser.Math.Between(-30, 30);
+            const sp = this.add.text(sx, sy, "✨", { fontSize: "10px", alpha: 0 }).setOrigin(0.5);
+            this.offerContainer.add(sp);
+            this.tweens.add({
+              targets: sp,
+              alpha: { from: 0, to: 1 },
+              y: sy - 18,
+              duration: 550,
+              yoyo: true,
+              onComplete: () => sp.destroy(),
+            });
+          },
+        });
       }
     });
   }
 
-  private drawButtons(): void {
-    const btnY = VH - 90;
-    const btnData = [
-      { x: 80,       label: "✅", sub: "ACCEPT",  color: 0x4ade80, action: "accept" },
-      { x: VW / 2,   label: "➕", sub: "ADD MORE", color: 0x60a5fa, action: "add"    },
-      { x: VW - 80,  label: "❌", sub: "NEXT",    color: 0xf87171, action: "reject"  },
+  private buildButtons(): void {
+    const W = this.scale.width;
+    const H = this.scale.height;
+    const btnY = H - 72;
+
+    const buttons = [
+      { label: "✅", sub: "ACCEPT",   x: W / 2 - 120, color: 0x22c55e, action: "accept" },
+      { label: "➕", sub: "ADD MORE", x: W / 2,        color: 0x7c3aed, action: "add"    },
+      { label: "❌", sub: "SKIP",     x: W / 2 + 120,  color: 0xef4444, action: "reject" },
     ];
 
-    btnData.forEach(({ x, label, sub, color, action }) => {
-      const hexColor = "#" + color.toString(16).padStart(6, "0");
-      const btn = this.add.circle(x, btnY, 38, color, 0.9)
-        .setInteractive({ useHandCursor: true });
-      this.add.text(x, btnY - 4, label, { fontSize: "26px" }).setOrigin(0.5);
-      this.add.text(x, btnY + 48, sub, {
-        fontFamily: "Manrope, sans-serif", fontSize: "11px", fontStyle: "bold", color: hexColor,
+    for (const bd of buttons) {
+      const gfx = this.add.graphics();
+      gfx.fillStyle(bd.color, 1);
+      gfx.fillCircle(bd.x, btnY, 34);
+
+      const lbl = this.add.text(bd.x, btnY - 4, bd.label, { fontSize: "26px" }).setOrigin(0.5);
+      this.add.text(bd.x, btnY + 42, bd.sub, {
+        fontFamily: "Manrope, sans-serif",
+        fontSize: "11px",
+        fontStyle: "bold",
+        color: "#6b7280",
       }).setOrigin(0.5);
 
-      btn.on("pointerover", () => {
-        this.tweens.add({ targets: btn, scaleX: 1.15, scaleY: 1.15, duration: 150 });
-      });
-      btn.on("pointerout", () => {
-        this.tweens.add({ targets: btn, scaleX: 1, scaleY: 1, duration: 150 });
-      });
-      btn.on("pointerdown", () => this.handleAction(action));
+      const hit = this.add.circle(bd.x, btnY, 38, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      const action = bd.action;
+      hit.on("pointerdown", () => this.handleAction(action));
+      hit.on("pointerover", () => this.tweens.add({ targets: [gfx, lbl], scaleX: 1.12, scaleY: 1.12, duration: 80 }));
+      hit.on("pointerout",  () => this.tweens.add({ targets: [gfx, lbl], scaleX: 1,    scaleY: 1,    duration: 80 }));
+    }
+  }
+
+  private setSpeech(text: string): void {
+    this.speechText.setText(text);
+    this.tweens.add({
+      targets: this.speechText,
+      scaleX: { from: 1.15, to: 1 },
+      scaleY: { from: 1.15, to: 1 },
+      duration: 220,
+      ease: "Back.easeOut",
     });
   }
 
   private handleAction(action: string): void {
     if (action === "accept") {
-      // Complete the trade!
-      const score = tradeScore(this.state.yourSquishy, this.offer);
-      // Add received squishies to collection
-      const newCollection = [...this.state.collection];
-      this.offer.forEach(sq => {
-        if (!newCollection.includes(sq.id)) newCollection.push(sq.id);
-      });
-      // Remove given squishy from collection (maybe)
-      const givenIdx = newCollection.indexOf(this.state.yourSquishy.id);
-      if (givenIdx !== -1) newCollection.splice(givenIdx, 1);
-      // Ensure at least one squishy
-      if (newCollection.length === 0) newCollection.push(pick(SQUISHIES.filter(s => s.rarity === "common")).id);
-
-      this.state.collection = newCollection;
-      saveCollection(newCollection);
-      this.state.tradeResult = { given: this.state.yourSquishy, received: this.offer, score };
-      this.state.onScore(score);
-
-      this.cameras.main.fadeOut(300, 255, 255, 255);
-      this.time.delayedCall(300, () => {
-        this.scene.start("Result", this.state);
-      });
-
+      this.doTrade();
     } else if (action === "add") {
-      if (this.addCount >= 2) {
-        this.showSpeech("I can't add any more! 😅");
+      if (this.addCount >= this.MAX_OFFER - 1) {
+        this.setSpeech("That's all I have! 😅");
         return;
       }
       this.addCount++;
-      const existing = this.offer.map(s => s.id);
-      const pool = SQUISHIES.filter(s => !existing.includes(s.id) && s.id !== this.state.yourSquishy.id);
-      if (pool.length === 0) {
-        this.showSpeech("I have nothing left! 😱");
-        return;
-      }
-      // Personality affects what they add
-      let newSq: Squishy;
-      if (this.computer.personality === "generous") {
-        const good = pool.filter(s => s.value >= this.state.yourSquishy.value * 0.3);
-        newSq = pick(good.length ? good : pool);
-      } else if (this.computer.personality === "stingy") {
-        const cheap = pool.filter(s => s.value <= 3);
-        newSq = pick(cheap.length ? cheap : pool);
-      } else {
-        newSq = pick(pool);
-      }
-      this.offer.push(newSq);
-      this.showSpeech(pick(this.computer.speechAdd));
-      this.refreshOffer();
-
-    } else if (action === "reject") {
-      this.showSpeech(pick(this.computer.speechReject));
-      this.time.delayedCall(700, () => {
-        this.computerIndex++;
-        this.cameras.main.fadeOut(250, 0, 0, 0);
-        this.time.delayedCall(250, () => {
-          this.cameras.main.fadeIn(250);
-          this.loadNextComputer();
+      this.offer.push(...this.buildOffer(1));
+      this.setSpeech(this.trader.speechAdd);
+      this.renderOffer();
+      this.tweens.add({
+        targets: this.offerContainer,
+        scaleX: { from: 0.85, to: 1 },
+        scaleY: { from: 0.85, to: 1 },
+        duration: 300,
+        ease: "Back.easeOut",
+      });
+    } else {
+      // reject
+      this.setSpeech(this.trader.speechReject);
+      this.cameras.main.shake(180, 0.005);
+      this.time.delayedCall(650, () => {
+        this.cameras.main.fadeOut(200, 253, 244, 255);
+        this.cameras.main.once("camerafadeoutcomplete", () => {
+          this.scene.restart();
         });
       });
     }
   }
 
-  private refreshOffer(): void {
-    // Remove old offer objects and redraw
-    this.offerContainer?.destroy();
-    this.drawOffer();
+  private doTrade(): void {
+    const inv = this.shared.inventory;
+    const mySquishy = inv[this.mySquishyIndex] ?? inv[0]!;
+    const received = [...this.offer];
+
+    inv.splice(this.mySquishyIndex, 1);
+    inv.push(...received);
+    saveInventory(inv);
+
+    for (const s of received) this.shared.collection.add(s.id);
+    this.shared.collection.add(mySquishy.id);
+    saveCollection(this.shared.collection);
+
+    this.shared.tradesCompleted++;
+    this.shared.onScore(this.shared.tradesCompleted);
+
+    this.spawnCelebration();
+
+    this.time.delayedCall(800, () => {
+      this.cameras.main.fadeOut(300, 253, 244, 255);
+      this.cameras.main.once("camerafadeoutcomplete", () => {
+        const resultData: ResultData = {
+          onScore: this.shared.onScore,
+          inventory: this.shared.inventory,
+          collection: this.shared.collection,
+          tradesCompleted: this.shared.tradesCompleted,
+          gave: mySquishy,
+          received,
+        };
+        this.scene.start("result", resultData);
+      });
+    });
   }
 
-  private spawnCardSparkles(x: number, y: number): void {
-    const glyphs = ["✦", "✧", "⋆", "★"];
-    for (let i = 0; i < 4; i++) {
-      const sx = x + (Math.random() - 0.5) * 80;
-      const sy = y + (Math.random() - 0.5) * 60;
-      const star = this.add.text(sx, sy, pick(glyphs), {
-        fontSize: "10px",
-        color: "#f9a8d4",
-        alpha: 0,
-      });
+  private spawnCelebration(): void {
+    const W = this.scale.width;
+    const H = this.scale.height;
+    const emojis = ["🎉", "✨", "💕", "🌟", "🎀", "💫"];
+    for (let i = 0; i < 16; i++) {
+      const t = this.add.text(
+        Phaser.Math.Between(20, W - 20),
+        Phaser.Math.Between(H / 2 - 80, H / 2 + 80),
+        rand(emojis),
+        { fontSize: `${Phaser.Math.Between(16, 32)}px`, alpha: 0 }
+      ).setOrigin(0.5);
       this.tweens.add({
-        targets: star,
-        alpha: { from: 0, to: 0.9 },
-        y: sy - 20,
-        duration: 800 + Math.random() * 600,
-        delay: Math.random() * 1500,
-        yoyo: true,
-        repeat: -1,
-        ease: "Sine.easeInOut",
+        targets: t,
+        alpha: { from: 0, to: 1 },
+        y: t.y - Phaser.Math.Between(60, 120),
+        duration: Phaser.Math.Between(400, 700),
+        delay: i * 40,
+        ease: "Sine.easeOut",
+        onComplete: () => {
+          this.tweens.add({ targets: t, alpha: 0, duration: 300, onComplete: () => t.destroy() });
+        },
       });
     }
   }
 }
 
-// ─── RESULT SCENE ────────────────────────────────────────────────────────────
-class ResultScene extends Phaser.Scene {
-  private state!: GameState;
+// ─── ResultScene ──────────────────────────────────────────────────────────────
 
-  constructor() { super("Result"); }
+interface ResultData extends SharedState {
+  gave: Squishy;
+  received: Squishy[];
+}
+
+class ResultScene extends Phaser.Scene {
+  private resultData!: ResultData;
+
+  constructor() { super("result"); }
 
   init(data: object): void {
-    this.state = data as GameState;
+    this.resultData = data as ResultData;
   }
 
   create(): void {
-    const result = this.state.tradeResult;
-    if (!result) {
-      this.scene.start("Menu", this.state);
-      return;
-    }
+    const W = this.scale.width;
+    const H = this.scale.height;
+    const { gave, received } = this.resultData;
 
-    const { given, received, score } = result;
-    const { label, emoji, color } = tradeLabel(score);
+    this.add.rectangle(W / 2, H / 2, W, H, BG_COLOR);
 
-    // Background
-    const bg = this.add.graphics();
-    bg.fillGradientStyle(0xfdf2f8, 0xfdf2f8, 0xf0fdf4, 0xf0fdf4, 1);
-    bg.fillRect(0, 0, VW, VH);
+    const score = tradeScore(gave, received);
+    const rating = tradeRating(score);
 
-    // Confetti burst
-    this.spawnConfetti();
-
-    // Title
-    this.add.text(VW / 2, 60, "🎉 TRADE COMPLETE! 🎉", {
-      fontFamily: "Fraunces, serif",
-      fontSize: "28px",
-      color: "#be185d",
-      stroke: "#ffffff",
-      strokeThickness: 3,
-    }).setOrigin(0.5).setAlpha(0).setScale(0.5);
-
-    this.tweens.add({
-      targets: this.children.list[this.children.list.length - 1],
-      alpha: 1, scaleX: 1, scaleY: 1,
-      duration: 500, ease: "Back.easeOut",
-    });
-
-    // Trade summary
-    this.add.text(VW / 2, 120, "You gave:", {
-      fontFamily: "Manrope, sans-serif", fontSize: "13px", color: "#6b7280",
-    }).setOrigin(0.5);
-
-    this.add.text(VW / 2, 148, `${given.emoji} ${given.name}`, {
-      fontFamily: "Manrope, sans-serif", fontSize: "20px", fontStyle: "bold", color: "#1e1b4b",
-    }).setOrigin(0.5);
-
-    const rarColor = "#" + RARITY_COLORS[given.rarity].toString(16).padStart(6, "0");
-    this.add.text(VW / 2, 172, RARITY_LABELS[given.rarity], {
-      fontFamily: "Manrope, sans-serif", fontSize: "12px", color: rarColor,
-    }).setOrigin(0.5);
-
-    // Arrow
-    this.add.text(VW / 2, 200, "⬇️", { fontSize: "24px" }).setOrigin(0.5);
-
-    this.add.text(VW / 2, 228, "You received:", {
-      fontFamily: "Manrope, sans-serif", fontSize: "13px", color: "#6b7280",
-    }).setOrigin(0.5);
-
-    // Received squishies
-    const recY = 310;
-    const spacing = Math.min(140, (VW - 40) / received.length);
-    const startX = VW / 2 - ((received.length - 1) * spacing) / 2;
-
-    received.forEach((sq, i) => {
-      const x = startX + i * spacing;
-      const rc = RARITY_COLORS[sq.rarity];
-      const rcHex = "#" + rc.toString(16).padStart(6, "0");
-
-      const card = this.add.rectangle(x, recY, 110, 90, 0xffffff, 0.95)
-        .setStrokeStyle(2, rc).setAlpha(0).setScale(0.5);
-
-      const emojiTxt = this.add.text(x, recY - 18, sq.emoji, { fontSize: "28px" })
-        .setOrigin(0.5).setAlpha(0).setScale(0.5);
-      const nameTxt = this.add.text(x, recY + 16, sq.name, {
-        fontFamily: "Manrope, sans-serif", fontSize: "11px", fontStyle: "bold", color: "#1e1b4b",
-      }).setOrigin(0.5).setAlpha(0).setScale(0.5);
-      const rarTxt = this.add.text(x, recY + 30, RARITY_LABELS[sq.rarity], {
-        fontFamily: "Manrope, sans-serif", fontSize: "9px", color: rcHex,
-      }).setOrigin(0.5).setAlpha(0).setScale(0.5);
-
-      this.tweens.add({
-        targets: [card, emojiTxt, nameTxt, rarTxt],
-        alpha: 1, scaleX: 1, scaleY: 1,
-        duration: 400, delay: 300 + i * 200, ease: "Back.easeOut",
-      });
-
-      if (["rare","epic","legendary","ultrarare"].includes(sq.rarity)) {
-        this.time.delayedCall(300 + i * 200, () => this.spawnCardSparkles(x, recY));
-      }
-    });
-
-    // Score badge
-    const scoreBadge = this.add.text(VW / 2, 430, `${emoji} ${label}  ${score}/100`, {
+    this.add.text(W / 2, 52, "🎉 TRADE COMPLETE! 🎉", {
       fontFamily: "Fraunces, serif",
       fontSize: "24px",
-      color: color,
-      backgroundColor: "#ffffff",
-      padding: { x: 20, y: 12 },
-      stroke: color,
-      strokeThickness: 2,
-    }).setOrigin(0.5).setAlpha(0).setScale(0.3);
+      color: "#7c3aed",
+      fontStyle: "bold",
+    }).setOrigin(0.5);
 
-    this.tweens.add({
-      targets: scoreBadge,
-      alpha: 1, scaleX: 1, scaleY: 1,
-      duration: 500, delay: 700, ease: "Back.easeOut",
-    });
+    // Score circle
+    const cGfx = this.add.graphics();
+    cGfx.fillStyle(0xffffff, 1);
+    cGfx.fillCircle(W / 2, 140, 52);
+    cGfx.lineStyle(4, ACCENT, 1);
+    cGfx.strokeCircle(W / 2, 140, 52);
 
-    // New squishies badge
-    const newOnes = received.filter(s => !this.state.collection.includes(s.id) || true);
-    if (newOnes.some(s => ["epic","legendary","ultrarare"].includes(s.rarity))) {
-      const rareBadge = this.add.text(VW / 2, 490, "✨ RARE FIND! ✨", {
-        fontFamily: "Fraunces, serif",
-        fontSize: "20px",
-        color: "#a855f7",
-        backgroundColor: "#f5f3ff",
-        padding: { x: 16, y: 8 },
-      }).setOrigin(0.5).setAlpha(0);
+    this.add.text(W / 2, 132, `${score}`, {
+      fontFamily: "Fraunces, serif",
+      fontSize: "32px",
+      fontStyle: "bold",
+      color: rating.color,
+    }).setOrigin(0.5);
+    this.add.text(W / 2, 156, "/100", {
+      fontFamily: "Manrope, sans-serif",
+      fontSize: "13px",
+      color: "#9ca3af",
+    }).setOrigin(0.5);
+
+    this.add.text(W / 2, 210, `${rating.emoji} ${rating.label}`, {
+      fontFamily: "Fraunces, serif",
+      fontSize: "22px",
+      fontStyle: "bold",
+      color: rating.color,
+    }).setOrigin(0.5);
+
+    // You gave
+    const gGfx = this.add.graphics();
+    gGfx.fillStyle(0xfee2e2, 1);
+    gGfx.fillRoundedRect(20, 238, W - 40, 78, 14);
+    this.add.text(W / 2, 255, "You Gave", {
+      fontFamily: "Manrope, sans-serif",
+      fontSize: "11px",
+      fontStyle: "bold",
+      color: "#9ca3af",
+    }).setOrigin(0.5);
+    this.add.text(W / 2, 282, `${gave.emoji}  ${gave.name}`, {
+      fontFamily: "Manrope, sans-serif",
+      fontSize: "18px",
+      fontStyle: "bold",
+      color: "#374151",
+    }).setOrigin(0.5);
+    this.add.text(W / 2, 304, RARITY_LABELS[gave.rarity], {
+      fontFamily: "Manrope, sans-serif",
+      fontSize: "11px",
+      color: `#${RARITY_COLORS[gave.rarity].toString(16).padStart(6, "0")}`,
+    }).setOrigin(0.5);
+
+    // You received
+    const rGfx = this.add.graphics();
+    rGfx.fillStyle(0xf0fdf4, 1);
+    rGfx.fillRoundedRect(20, 330, W - 40, 155, 14);
+    this.add.text(W / 2, 348, "You Received", {
+      fontFamily: "Manrope, sans-serif",
+      fontSize: "11px",
+      fontStyle: "bold",
+      color: "#9ca3af",
+    }).setOrigin(0.5);
+
+    const n = received.length;
+    const spacing = Math.min(72, (W - 60) / Math.max(n, 1));
+    const startX = W / 2 - (spacing * (n - 1)) / 2;
+    received.forEach((sq, i) => {
+      const x = startX + i * spacing;
+      const emojiT = this.add.text(x, 388, sq.emoji, { fontSize: "28px" }).setOrigin(0.5);
+      this.add.text(x, 418, sq.name, {
+        fontFamily: "Manrope, sans-serif",
+        fontSize: "9px",
+        fontStyle: "bold",
+        color: "#374151",
+      }).setOrigin(0.5);
+      this.add.text(x, 430, RARITY_LABELS[sq.rarity], {
+        fontFamily: "Manrope, sans-serif",
+        fontSize: "8px",
+        color: `#${RARITY_COLORS[sq.rarity].toString(16).padStart(6, "0")}`,
+      }).setOrigin(0.5);
       this.tweens.add({
-        targets: rareBadge,
-        alpha: 1,
-        duration: 400, delay: 1100,
-        yoyo: true, repeat: -1, ease: "Sine.easeInOut",
+        targets: emojiT,
+        scaleX: { from: 0, to: 1 },
+        scaleY: { from: 0, to: 1 },
+        duration: 400,
+        delay: i * 120,
+        ease: "Back.easeOut",
       });
-    }
+    });
 
     // Buttons
-    const nextBtn = this.add.text(VW / 2 - 80, VH - 80, "  🔄 Trade Again  ", {
-      fontFamily: "Manrope, sans-serif", fontSize: "16px", fontStyle: "bold",
-      color: "#ffffff", backgroundColor: "#ec4899", padding: { x: 14, y: 10 },
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-
-    nextBtn.on("pointerover", () => nextBtn.setBackgroundColor("#db2777"));
-    nextBtn.on("pointerout",  () => nextBtn.setBackgroundColor("#ec4899"));
-    nextBtn.on("pointerdown", () => {
-      this.state.yourSquishy = getStartingSquishy(this.state.collection);
-      this.cameras.main.fadeOut(300, 0, 0, 0);
-      this.time.delayedCall(300, () => this.scene.start("Trade", this.state));
+    this.makeBtn(W / 2 - 82, H - 90, "🤝 Trade Again", 0x7c3aed, () => {
+      this.cameras.main.fadeOut(200, 253, 244, 255);
+      this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("trade", this.resultData));
+    });
+    this.makeBtn(W / 2 + 82, H - 90, "🏠 Menu", 0xec4899, () => {
+      this.cameras.main.fadeOut(200, 253, 244, 255);
+      this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("menu", this.resultData));
     });
 
-    const colBtn = this.add.text(VW / 2 + 80, VH - 80, "  📦 Collection  ", {
-      fontFamily: "Manrope, sans-serif", fontSize: "16px",
-      color: "#7c3aed", backgroundColor: "#ede9fe", padding: { x: 14, y: 10 },
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    this.spawnConfetti();
+    this.cameras.main.fadeIn(300, 253, 244, 255);
+  }
 
-    colBtn.on("pointerover", () => colBtn.setBackgroundColor("#ddd6fe"));
-    colBtn.on("pointerout",  () => colBtn.setBackgroundColor("#ede9fe"));
-    colBtn.on("pointerdown", () => {
-      this.cameras.main.fadeOut(300, 0, 0, 0);
-      this.time.delayedCall(300, () => this.scene.start("Collection", this.state));
-    });
-
-    this.cameras.main.fadeIn(400);
+  private makeBtn(x: number, y: number, label: string, color: number, cb: () => void): void {
+    const gfx = this.add.graphics();
+    gfx.fillStyle(color, 1);
+    gfx.fillRoundedRect(x - 72, y - 22, 144, 44, 22);
+    const txt = this.add.text(x, y, label, {
+      fontFamily: "Manrope, sans-serif",
+      fontSize: "13px",
+      fontStyle: "bold",
+      color: "#ffffff",
+    }).setOrigin(0.5);
+    const hit = this.add.rectangle(x, y, 144, 44, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerdown", cb);
+    hit.on("pointerover", () => this.tweens.add({ targets: [gfx, txt], scaleX: 1.06, scaleY: 1.06, duration: 80 }));
+    hit.on("pointerout",  () => this.tweens.add({ targets: [gfx, txt], scaleX: 1,    scaleY: 1,    duration: 80 }));
   }
 
   private spawnConfetti(): void {
-    const colors = ["#f472b6","#a855f7","#60a5fa","#4ade80","#fbbf24","#f87171"];
-    for (let i = 0; i < 30; i++) {
-      const x = Math.random() * VW;
-      const conf = this.add.rectangle(x, -20, 8, 8, parseInt(colors[i % colors.length]!.slice(1), 16));
+    const W = this.scale.width;
+    const colors = [0xef4444, 0xfbbf24, 0x22c55e, 0x3b82f6, 0xa855f7, 0xec4899];
+    for (let i = 0; i < 24; i++) {
+      const x = Phaser.Math.Between(0, W);
+      const color = colors[i % colors.length]!;
+      const rect = this.add.rectangle(x, -10, 8, 8, color);
       this.tweens.add({
-        targets: conf,
-        y: VH + 20,
-        x: x + (Math.random() - 0.5) * 100,
-        angle: Math.random() * 360,
-        duration: 1500 + Math.random() * 1500,
-        delay: Math.random() * 1000,
-        ease: "Quad.easeIn",
-        onComplete: () => conf.destroy(),
-      });
-    }
-  }
-
-  private spawnCardSparkles(x: number, y: number): void {
-    const glyphs = ["✦", "✧", "⋆", "★", "✨"];
-    for (let i = 0; i < 6; i++) {
-      const sx = x + (Math.random() - 0.5) * 80;
-      const sy = y + (Math.random() - 0.5) * 60;
-      const star = this.add.text(sx, sy, pick(glyphs), {
-        fontSize: "12px", color: "#f9a8d4", alpha: 0,
-      });
-      this.tweens.add({
-        targets: star,
-        alpha: { from: 0, to: 1 },
-        y: sy - 25,
-        duration: 700 + Math.random() * 500,
-        delay: Math.random() * 800,
-        yoyo: true,
-        repeat: -1,
-        ease: "Sine.easeInOut",
+        targets: rect,
+        y: 820,
+        x: x + Phaser.Math.Between(-60, 60),
+        angle: Phaser.Math.Between(0, 360),
+        duration: Phaser.Math.Between(1200, 2400),
+        delay: i * 60,
+        ease: "Linear",
+        onComplete: () => rect.destroy(),
       });
     }
   }
 }
 
-// ─── COLLECTION SCENE ────────────────────────────────────────────────────────
-class CollectionScene extends Phaser.Scene {
-  private state!: GameState;
-  private scrollY = 0;
-  private contentHeight = 0;
-  private contentContainer!: Phaser.GameObjects.Container;
-  private isDragging = false;
-  private dragStartY = 0;
-  private scrollStartY = 0;
+// ─── CollectionScene ──────────────────────────────────────────────────────────
 
-  constructor() { super("Collection"); }
+class CollectionScene extends Phaser.Scene {
+  private shared!: SharedState;
+
+  constructor() { super("collection"); }
 
   init(data: object): void {
-    this.state = data as GameState;
-    this.scrollY = 0;
+    this.shared = data as SharedState;
   }
 
   create(): void {
-    // Background
-    const bg = this.add.graphics();
-    bg.fillGradientStyle(0xfdf4ff, 0xfdf4ff, 0xfce7f3, 0xfce7f3, 1);
-    bg.fillRect(0, 0, VW, VH);
+    const W = this.scale.width;
+    const H = this.scale.height;
+    const col = this.shared.collection;
 
-    // Header (fixed)
-    this.add.text(VW / 2, 30, "📦 My Collection", {
-      fontFamily: "Fraunces, serif", fontSize: "28px", color: "#be185d",
+    this.add.rectangle(W / 2, H / 2, W, H, BG_COLOR);
+
+    this.add.text(W / 2, 30, "🎀 My Collection", {
+      fontFamily: "Fraunces, serif",
+      fontSize: "26px",
+      color: "#7c3aed",
+      fontStyle: "bold",
+    }).setOrigin(0.5);
+    this.add.text(W / 2, 60, `${col.size} / ${SQUISHIES.length} discovered`, {
+      fontFamily: "Manrope, sans-serif",
+      fontSize: "13px",
+      color: "#a855f7",
     }).setOrigin(0.5);
 
-    const count = this.state.collection.length;
-    this.add.text(VW / 2, 62, `${count} / ${SQUISHIES.length} squishies collected`, {
-      fontFamily: "Manrope, sans-serif", fontSize: "14px", color: "#9d174d",
-    }).setOrigin(0.5);
+    // Grid
+    const cols = 4;
+    const cellW = (W - 40) / cols;
+    const cellH = 88;
+    const startX = 20 + cellW / 2;
+    const startY = 88;
 
-    // Scrollable content
-    this.contentContainer = this.add.container(0, 90);
-    this.buildGrid();
+    SQUISHIES.forEach((sq, i) => {
+      const col2 = i % cols;
+      const row = Math.floor(i / cols);
+      const x = startX + col2 * cellW;
+      const y = startY + row * cellH;
+      const discovered = col.has(sq.id);
 
-    // Back button (fixed)
-    const backBtn = this.add.text(VW / 2, VH - 36, "  ← Back  ", {
-      fontFamily: "Manrope, sans-serif", fontSize: "16px", fontStyle: "bold",
-      color: "#ffffff", backgroundColor: "#ec4899", padding: { x: 20, y: 10 },
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(10);
+      const bg = this.add.graphics();
+      if (discovered) {
+        bg.fillStyle(RARITY_COLORS[sq.rarity], 0.12);
+        bg.fillRoundedRect(x - cellW / 2 + 3, y - 34, cellW - 6, 78, 12);
+        bg.lineStyle(1.5, RARITY_COLORS[sq.rarity], 0.6);
+        bg.strokeRoundedRect(x - cellW / 2 + 3, y - 34, cellW - 6, 78, 12);
 
-    backBtn.on("pointerdown", () => {
-      this.cameras.main.fadeOut(300, 0, 0, 0);
-      this.time.delayedCall(300, () => this.scene.start("Menu", this.state));
-    });
-
-    // Scroll input
-    this.input.on("pointerdown", (p: Phaser.Input.Pointer) => {
-      this.isDragging = true;
-      this.dragStartY = p.y;
-      this.scrollStartY = this.scrollY;
-    });
-    this.input.on("pointermove", (p: Phaser.Input.Pointer) => {
-      if (!this.isDragging) return;
-      const delta = p.y - this.dragStartY;
-      this.scrollY = Phaser.Math.Clamp(
-        this.scrollStartY + delta,
-        -(this.contentHeight - (VH - 140)),
-        0
-      );
-      this.contentContainer.y = 90 + this.scrollY;
-    });
-    this.input.on("pointerup", () => { this.isDragging = false; });
-
-    this.cameras.main.fadeIn(350);
-  }
-
-  private buildGrid(): void {
-    const cols = 3;
-    const cardW = 130;
-    const cardH = 110;
-    const padX = (VW - cols * cardW) / (cols + 1);
-    const padY = 12;
-
-    SQUISHIES.forEach((sq, idx) => {
-      const col = idx % cols;
-      const row = Math.floor(idx / cols);
-      const x = padX + col * (cardW + padX) + cardW / 2;
-      const y = row * (cardH + padY) + cardH / 2;
-
-      const owned = this.state.collection.includes(sq.id);
-      const rarColor = owned ? RARITY_COLORS[sq.rarity] : 0xcccccc;
-
-      const card = this.add.rectangle(x, y, cardW, cardH, owned ? 0xffffff : 0xf3f4f6, 0.95)
-        .setStrokeStyle(2, rarColor);
-      this.contentContainer.add(card);
-
-      if (owned) {
-        const emojiTxt = this.add.text(x, y - 20, sq.emoji, { fontSize: "28px" }).setOrigin(0.5);
-        const nameTxt = this.add.text(x, y + 14, sq.name, {
-          fontFamily: "Manrope, sans-serif", fontSize: "11px", fontStyle: "bold", color: "#1e1b4b",
+        const emojiT = this.add.text(x, y - 4, sq.emoji, { fontSize: "26px" }).setOrigin(0.5);
+        this.tweens.add({
+          targets: emojiT,
+          scaleX: 1.08, scaleY: 1.08,
+          duration: 900 + i * 60,
+          yoyo: true,
+          repeat: -1,
+          ease: "Sine.easeInOut",
+        });
+        this.add.text(x, y + 24, sq.name, {
+          fontFamily: "Manrope, sans-serif",
+          fontSize: "9px",
+          fontStyle: "bold",
+          color: "#374151",
         }).setOrigin(0.5);
-        const rarTxt = this.add.text(x, y + 28, RARITY_LABELS[sq.rarity], {
-          fontFamily: "Manrope, sans-serif", fontSize: "9px",
-          color: "#" + rarColor.toString(16).padStart(6, "0"),
+        this.add.text(x, y + 36, RARITY_LABELS[sq.rarity], {
+          fontFamily: "Manrope, sans-serif",
+          fontSize: "8px",
+          color: `#${RARITY_COLORS[sq.rarity].toString(16).padStart(6, "0")}`,
         }).setOrigin(0.5);
-        this.contentContainer.add([emojiTxt, nameTxt, rarTxt]);
-
-        // Bounce for rare+
-        if (["epic","legendary","ultrarare"].includes(sq.rarity)) {
-          this.tweens.add({
-            targets: [card, emojiTxt],
-            scaleX: 1.05, scaleY: 1.05,
-            duration: 800, yoyo: true, repeat: -1, ease: "Sine.easeInOut",
-            delay: idx * 80,
-          });
-        }
       } else {
-        // Silhouette / locked
-        const lock = this.add.text(x, y - 10, "🔒", { fontSize: "28px" }).setOrigin(0.5);
-        const unk = this.add.text(x, y + 20, "???", {
-          fontFamily: "Manrope, sans-serif", fontSize: "12px", color: "#9ca3af",
+        bg.fillStyle(0xe5e7eb, 0.6);
+        bg.fillRoundedRect(x - cellW / 2 + 3, y - 34, cellW - 6, 78, 12);
+        this.add.text(x, y, "❓", { fontSize: "28px", alpha: 0.4 }).setOrigin(0.5);
+        this.add.text(x, y + 30, "???", {
+          fontFamily: "Manrope, sans-serif",
+          fontSize: "10px",
+          color: "#9ca3af",
         }).setOrigin(0.5);
-        this.contentContainer.add([lock, unk]);
       }
     });
 
-    const rows = Math.ceil(SQUISHIES.length / cols);
-    this.contentHeight = rows * (cardH + padY) + 20;
+    // Back button
+    const backGfx = this.add.graphics();
+    backGfx.fillStyle(0x7c3aed, 1);
+    backGfx.fillRoundedRect(W / 2 - 80, H - 62, 160, 44, 22);
+    const backTxt = this.add.text(W / 2, H - 40, "← Back to Menu", {
+      fontFamily: "Manrope, sans-serif",
+      fontSize: "14px",
+      fontStyle: "bold",
+      color: "#ffffff",
+    }).setOrigin(0.5);
+    const hit = this.add.rectangle(W / 2, H - 40, 160, 44, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    hit.on("pointerdown", () => {
+      this.cameras.main.fadeOut(200, 253, 244, 255);
+      this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("menu", this.shared));
+    });
+    hit.on("pointerover", () => this.tweens.add({ targets: [backGfx, backTxt], scaleX: 1.05, scaleY: 1.05, duration: 80 }));
+    hit.on("pointerout",  () => this.tweens.add({ targets: [backGfx, backTxt], scaleX: 1,    scaleY: 1,    duration: 80 }));
+
+    this.cameras.main.fadeIn(300, 253, 244, 255);
   }
 }
 
-// ─── Entry Point ─────────────────────────────────────────────────────────────
-export function startGame(parent: HTMLElement, onScore: (n: number) => void): () => void {
-  const collection = getInitialCollection();
-  const yourSquishy = getStartingSquishy(collection);
+// ─── Entry point ──────────────────────────────────────────────────────────────
 
-  const state: GameState = { onScore, collection, yourSquishy };
+export function startGame(parent: HTMLElement, onScore: (n: number) => void): () => void {
+  const inventory = loadInventory();
+  const collection = loadCollection();
+
+  for (const s of inventory) collection.add(s.id);
+  saveCollection(collection);
+
+  const shared: SharedState = { onScore, inventory, collection, tradesCompleted: 0 };
 
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent,
     width: VW,
     height: VH,
-    backgroundColor: "#fdf2f8",
+    backgroundColor: "#fdf4ff",
     scale: {
       mode: Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_BOTH,
@@ -1040,9 +927,8 @@ export function startGame(parent: HTMLElement, onScore: (n: number) => void): ()
     banner: false,
   });
 
-  // Pass state via scene.start data
   game.events.once("ready", () => {
-    game.scene.start("Menu", state);
+    game.scene.start("menu", shared);
   });
 
   return () => game.destroy(true);
