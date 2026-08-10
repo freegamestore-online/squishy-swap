@@ -20,7 +20,7 @@ interface ComputerPlayer {
   name: string;
   emoji: string;
   personality: Personality;
-  color: number; // accent tint — light = easy, mid = fair, dark = hard
+  color: number; // header border/glow colour — pastel, signals difficulty
 }
 
 interface ResultData {
@@ -45,14 +45,20 @@ const WHITE    = "#ffffff";
 const MUTED    = "#6b7280";
 const SUBTEXT  = "#9ca3af";
 
-// Difficulty badge colours
-const DIFF_EASY_COLOR   = 0x86efac; // light green  — easy traders have light colours
-const DIFF_FAIR_COLOR   = 0x93c5fd; // light blue   — neutral/ok traders
-const DIFF_HARD_COLOR   = 0x374151; // dark slate   — hard traders have dark colours
+// ─── Difficulty colours (all light pastels now) ───────────────────────────────
+// EASY  — mint green
+// OK    — periwinkle blue
+// HARD  — warm peach/coral
+// All three are light enough to read dark text on, and pop on the dark BG.
 
-const DIFF_EASY_TEXT  = "#14532d";
+const DIFF_EASY_COLOR = 0xa7f3d0; // light mint
+const DIFF_EASY_TEXT  = "#064e3b";
+
+const DIFF_FAIR_COLOR = 0xbfdbfe; // light periwinkle
 const DIFF_FAIR_TEXT  = "#1e3a5f";
-const DIFF_HARD_TEXT  = "#e5e7eb";
+
+const DIFF_HARD_COLOR = 0xfed7aa; // light peach
+const DIFF_HARD_TEXT  = "#7c2d12";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -77,17 +83,18 @@ const SQUISHIES: Squishy[] = [
   { id: "sparkle",    emoji: "✨", name: "Sparkle",     rarity: "Ultra Rare", value: 99 },
 ];
 
-// colour = light → easy, medium → fair, dark → hard
+// Trader header colours — all light pastels so they pop on the dark BG.
+// Easy = green-ish, Fair = blue-ish, Hard = warm orange/red.
 const COMPUTER_PLAYERS: ComputerPlayer[] = [
-  // EASY — generous, light pastel colours
-  { name: "Sunny",   emoji: "☀️", personality: "generous", color: 0xfde68a }, // pale yellow
-  { name: "Blossom", emoji: "🌸", personality: "generous", color: 0xfbcfe8 }, // pale pink
-  // FAIR — neutral mid-tone colours
-  { name: "Kai",     emoji: "🌊", personality: "fair",     color: 0x60a5fa }, // mid blue
-  { name: "Nova",    emoji: "🔮", personality: "fair",     color: 0xa78bfa }, // mid purple
-  // HARD — stingy, dark colours
-  { name: "Zara",    emoji: "🖤", personality: "stingy",   color: 0x374151 }, // dark slate
-  { name: "Vex",     emoji: "⚡", personality: "stingy",   color: 0x1e1b4b }, // near-black indigo
+  // EASY — generous, soft green pastels
+  { name: "Sunny",   emoji: "☀️", personality: "generous", color: 0x6ee7b7 }, // light teal-green
+  { name: "Blossom", emoji: "🌸", personality: "generous", color: 0xfda4af }, // light rose
+  // FAIR — soft periwinkle / lavender
+  { name: "Kai",     emoji: "🌊", personality: "fair",     color: 0x93c5fd }, // sky blue
+  { name: "Nova",    emoji: "🔮", personality: "fair",     color: 0xd8b4fe }, // light violet
+  // HARD — warm peach / amber (still light, but warm = danger)
+  { name: "Zara",    emoji: "🖤", personality: "stingy",   color: 0xfb923c }, // bright orange
+  { name: "Vex",     emoji: "⚡", personality: "stingy",   color: 0xf87171 }, // light red-coral
 ];
 
 const RARITY_COLORS: Record<Rarity, number> = {
@@ -115,9 +122,9 @@ interface DiffInfo {
 }
 
 function diffInfo(p: Personality): DiffInfo {
-  if (p === "generous") return { label: "EASY",   emoji: "😊", badgeColor: DIFF_EASY_COLOR, textColor: DIFF_EASY_TEXT };
-  if (p === "fair")     return { label: "OK",     emoji: "🤝", badgeColor: DIFF_FAIR_COLOR, textColor: DIFF_FAIR_TEXT };
-  return                       { label: "HARD",   emoji: "😤", badgeColor: DIFF_HARD_COLOR, textColor: DIFF_HARD_TEXT };
+  if (p === "generous") return { label: "EASY", emoji: "😊", badgeColor: DIFF_EASY_COLOR, textColor: DIFF_EASY_TEXT };
+  if (p === "fair")     return { label: "OK",   emoji: "🤝", badgeColor: DIFF_FAIR_COLOR, textColor: DIFF_FAIR_TEXT };
+  return                       { label: "HARD", emoji: "😤", badgeColor: DIFF_HARD_COLOR, textColor: DIFF_HARD_TEXT };
 }
 
 // ─── Weighted random ─────────────────────────────────────────────────────────
@@ -254,25 +261,24 @@ class MenuScene extends Phaser.Scene {
     this.cameras.main.fadeIn(280, 13, 13, 26);
   }
 
-  // Small difficulty legend on the menu so players know what colours mean
   private buildDiffLegend(cy: number): void {
     this.add.text(VW / 2, cy - 14, "TRADER DIFFICULTY", {
       fontFamily: "Manrope, sans-serif", fontSize: "9px", fontStyle: "bold", color: MUTED,
     }).setOrigin(0.5);
 
-    const items: { label: string; color: number; textColor: string }[] = [
-      { label: "EASY", color: DIFF_EASY_COLOR, textColor: DIFF_EASY_TEXT },
-      { label: "OK",   color: DIFF_FAIR_COLOR, textColor: DIFF_FAIR_TEXT },
-      { label: "HARD", color: DIFF_HARD_COLOR, textColor: DIFF_HARD_TEXT },
+    const items = [
+      { label: "😊 EASY", color: DIFF_EASY_COLOR, textColor: DIFF_EASY_TEXT },
+      { label: "🤝 OK",   color: DIFF_FAIR_COLOR, textColor: DIFF_FAIR_TEXT },
+      { label: "😤 HARD", color: DIFF_HARD_COLOR, textColor: DIFF_HARD_TEXT },
     ];
-    const pillW = 72; const pillH = 24; const gap = 10;
+    const pillW = 80; const pillH = 26; const gap = 10;
     const totalW = items.length * pillW + (items.length - 1) * gap;
     const startX = (VW - totalW) / 2;
 
     items.forEach((item, i) => {
       const px = startX + i * (pillW + gap);
       const gfx = this.add.graphics();
-      roundRect(gfx, px, cy, pillW, pillH, 12, item.color, 1);
+      roundRect(gfx, px, cy, pillW, pillH, 13, item.color, 1);
       this.add.text(px + pillW / 2, cy + pillH / 2, item.label, {
         fontFamily: "Manrope, sans-serif", fontSize: "10px", fontStyle: "bold", color: item.textColor,
       }).setOrigin(0.5);
@@ -369,42 +375,43 @@ class TradeScene extends Phaser.Scene {
     for (let y = 0; y < VH; y += 40) { gridGfx.moveTo(0, y); gridGfx.lineTo(VW, y); }
     gridGfx.strokePath();
 
-    // CP header
+    // CP header card — dark surface with a bright pastel border
     const headerGfx = this.add.graphics();
-    roundRect(headerGfx, 0, 0, VW, 128, 0, SURFACE, 1, this.cp.color, 2);
+    roundRect(headerGfx, 0, 0, VW, 128, 0, SURFACE, 1, this.cp.color, 3);
 
-    // Accent glow strip
+    // Bright pastel glow strip at top
     const glowGfx = this.add.graphics();
-    glowGfx.fillStyle(this.cp.color, 0.35);
-    glowGfx.fillRect(0, 0, VW, 4);
+    glowGfx.fillStyle(this.cp.color, 0.7);
+    glowGfx.fillRect(0, 0, VW, 5);
 
     this.add.text(18, 18, this.cp.emoji, { fontSize: "44px" });
     this.add.text(76, 22, this.cp.name.toUpperCase(), {
       fontFamily: "Fraunces, serif", fontSize: "20px", color: WHITE,
     });
+    // Personality label in the trader's pastel colour — now bright enough to see
     this.add.text(76, 52, this.personalityLabel(), {
       fontFamily: "Manrope, sans-serif", fontSize: "12px", color: hexStr(this.cp.color),
     });
 
     // ── Difficulty badge pill ──
     const diff = diffInfo(this.cp.personality);
-    const badgeW = 80; const badgeH = 26;
+    const badgeW = 84; const badgeH = 28;
     const badgeX = VW - 14 - badgeW;
-    const badgeY = 16;
+    const badgeY = 14;
     const badgeGfx = this.add.graphics();
-    roundRect(badgeGfx, badgeX, badgeY, badgeW, badgeH, 13, diff.badgeColor, 1);
+    roundRect(badgeGfx, badgeX, badgeY, badgeW, badgeH, 14, diff.badgeColor, 1);
     this.add.text(badgeX + badgeW / 2, badgeY + badgeH / 2,
       `${diff.emoji} ${diff.label}`, {
         fontFamily: "Manrope, sans-serif",
-        fontSize: "11px",
+        fontSize: "12px",
         fontStyle: "bold",
         color: diff.textColor,
       }).setOrigin(0.5);
 
-    // Trader counter pill (moved below badge)
+    // Trader counter pill (below badge)
     const counterGfx = this.add.graphics();
-    roundRect(counterGfx, VW - 14 - badgeW, badgeY + badgeH + 6, badgeW, 22, 11, SURFACE2, 1, BORDER, 1);
-    this.add.text(VW - 14 - badgeW / 2, badgeY + badgeH + 17,
+    roundRect(counterGfx, badgeX, badgeY + badgeH + 6, badgeW, 22, 11, SURFACE2, 1, BORDER, 1);
+    this.add.text(badgeX + badgeW / 2, badgeY + badgeH + 17,
       `${this.cpIndex + 1} / ${this.MAX_CP}`, {
         fontFamily: "Manrope, sans-serif", fontSize: "11px", color: SUBTEXT,
       }).setOrigin(0.5);
@@ -422,7 +429,6 @@ class TradeScene extends Phaser.Scene {
     divGfx.moveTo(20, 148); divGfx.lineTo(VW - 20, 148);
     divGfx.strokePath();
 
-    // Section labels
     this.add.text(20, 158, "YOUR SQUISHY", {
       fontFamily: "Manrope, sans-serif", fontSize: "10px", fontStyle: "bold", color: MUTED,
     });
@@ -520,7 +526,7 @@ class TradeScene extends Phaser.Scene {
     this.thermoFill  = this.add.graphics();
     this.thermoBulb  = this.add.graphics();
 
-    this.add.text(barX - 4,       barY + 12, "😬", { fontSize: "13px" }).setOrigin(0.5);
+    this.add.text(barX - 4,        barY + 12, "😬", { fontSize: "13px" }).setOrigin(0.5);
     this.add.text(barX + barW + 4, barY + 12, "🔥", { fontSize: "13px" }).setOrigin(0.5);
 
     this.thermoLabel = this.add.text(VW / 2, barY - 18, "", {
@@ -589,136 +595,147 @@ class TradeScene extends Phaser.Scene {
 
     this.refreshAddBtn(addGfx);
 
-    for (const [hit, gfx] of [[acceptHit, acceptGfx], [this.addBtn, addGfx], [rejectHit, rejectGfx]] as [Phaser.GameObjects.Rectangle, Phaser.GameObjects.Graphics][]) {
+    for (const [hit, gfx] of [
+      [acceptHit, acceptGfx], [this.addBtn, addGfx], [rejectHit, rejectGfx],
+    ] as [Phaser.GameObjects.Rectangle, Phaser.GameObjects.Graphics][]) {
       hit.on("pointerover", () => this.tweens.add({ targets: gfx, scaleX: 1.05, scaleY: 1.05, duration: 70 }));
       hit.on("pointerout",  () => this.tweens.add({ targets: gfx, scaleX: 1.0,  scaleY: 1.0,  duration: 70 }));
     }
 
     acceptHit.on("pointerdown", () => this.doAccept());
-    this.addBtn.on("pointerdown", () => this.doAddMore());
+    this.addBtn.on("pointerdown", () => this.doAddMore(addGfx));
     rejectHit.on("pointerdown", () => this.doReject());
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────────
+  private refreshAddBtn(gfx: Phaser.GameObjects.Graphics): void {
+    const remaining = this.MAX_ADD - this.addCount;
+    const disabled  = remaining <= 0;
+    const by = 596; const bh = 60; const bw = 118;
+    roundRect(gfx, VW / 2 - bw / 2, by - bh / 2, bw, bh, 14, disabled ? 0x1a1a2e : 0x451a03, 1, disabled ? BORDER : NEON_Y, 2);
+    this.addBtnLabel.setText(disabled ? "MAX ADDED" : `ADD MORE (${remaining})`);
+    this.addBtn.setInteractive(disabled ? false : { useHandCursor: true });
+  }
 
   private generateOffer(): Squishy[] {
     const myVal = this.mySquishy.value;
-    const p = this.cp.personality;
-    const target = p === "generous" ? myVal * 1.3 : p === "stingy" ? myVal * 0.6 : myVal * 0.95;
-    const count  = p === "stingy" ? 1 : 2;
+    const p     = this.cp.personality;
+
+    // Generous: offer 1–2 squishies worth slightly more than yours
+    // Fair:     offer 1–2 squishies worth roughly the same
+    // Stingy:   offer 1 squishy worth less
+    let totalTarget: number;
+    let count: number;
+    if (p === "generous") {
+      totalTarget = myVal * (1.2 + Math.random() * 0.5);
+      count = Math.random() < 0.5 ? 1 : 2;
+    } else if (p === "fair") {
+      totalTarget = myVal * (0.85 + Math.random() * 0.3);
+      count = Math.random() < 0.4 ? 1 : 2;
+    } else {
+      totalTarget = myVal * (0.4 + Math.random() * 0.35);
+      count = 1;
+    }
+
     const result: Squishy[] = [];
-    const used = [this.mySquishy.id];
+    const used: string[] = [this.mySquishy.id];
     for (let i = 0; i < count; i++) {
-      const s = weightedRandomSquishy((target / count) * 1.6, used);
-      result.push(s);
-      used.push(s.id);
+      const perItem = totalTarget / (count - i);
+      const sq = weightedRandomSquishy(perItem, used);
+      result.push(sq);
+      used.push(sq.id);
+      totalTarget -= sq.value;
     }
     return result;
   }
 
   private personalityLabel(): string {
-    const diff = diffInfo(this.cp.personality);
-    return `${diff.emoji} ${diff.label} trader`;
+    if (this.cp.personality === "generous") return "✨ Generous trader — great deals!";
+    if (this.cp.personality === "fair")     return "🤝 Fair trader — decent offers";
+    return "😤 Stingy trader — watch out!";
   }
 
   private getGreeting(): string {
-    const map: Record<Personality, string[]> = {
-      generous: ["Hi! I'd love to trade! 💕", "I have something great! 🌟", "Let's make a deal! 🎉"],
-      fair:     ["Hey! Wanna trade? 😊", "I think this is fair! 🤝", "Deal? 🌸"],
-      stingy:   ["Hmm... maybe? 🤔", "I guess I can trade... 😒", "Take it or leave it! 😤"],
+    const greetings: Record<Personality, string[]> = {
+      generous: [
+        `Hey! I love your ${this.mySquishy.name} 🥺 let's make a deal!`,
+        `Omg I need that ${this.mySquishy.name}! Here's my best offer ✨`,
+        `I'll be generous — check out what I've got! 🎁`,
+      ],
+      fair: [
+        `Hmm, I'll give you a fair trade for that ${this.mySquishy.name}.`,
+        `Let's keep it balanced. Here's my offer 🤝`,
+        `I think this is pretty fair — what do you say?`,
+      ],
+      stingy: [
+        `Take it or leave it. That's my only offer. 😤`,
+        `Your ${this.mySquishy.name} isn't worth much to me tbh.`,
+        `I'm doing YOU a favour here. 🙄`,
+      ],
     };
-    return pick(map[this.cp.personality]);
+    return pick(greetings[this.cp.personality]);
   }
-
-  private setSpeech(txt: string): void {
-    this.speechText.setText(txt);
-    this.tweens.killTweensOf(this.speechBubble);
-    this.speechBubble.setScale(1);
-    this.tweens.add({ targets: this.speechBubble, scaleX: 1.04, scaleY: 1.12, duration: 100, yoyo: true, ease: "Sine.easeOut" });
-  }
-
-  private refreshAddBtn(addGfx: Phaser.GameObjects.Graphics): void {
-    const maxed = this.addCount >= this.MAX_ADD;
-    roundRect(addGfx, VW / 2 - 118 / 2, 596 - 60 / 2, 118, 60, 14,
-      maxed ? 0x1c1c1c : 0x451a03, 1,
-      maxed ? BORDER   : NEON_Y, 2);
-    this.addBtnLabel.setColor(maxed ? MUTED : hexStr(NEON_Y));
-    if (maxed) this.addBtn.removeInteractive();
-  }
-
-  // ── Actions ───────────────────────────────────────────────────────────────────
 
   private doAccept(): void {
-    const myVal  = this.mySquishy.value;
-    const offVal = this.offered.reduce((s, q) => s + q.value, 0);
-    const ratio  = offVal / Math.max(myVal, 1);
-    let score: number;
-    if      (ratio >= 1.5) score = 90 + Math.floor(Math.random() * 10);
-    else if (ratio >= 1.1) score = 70 + Math.floor(Math.random() * 20);
-    else if (ratio >= 0.9) score = 50 + Math.floor(Math.random() * 20);
-    else if (ratio >= 0.6) score = 25 + Math.floor(Math.random() * 25);
-    else                   score = 5  + Math.floor(Math.random() * 20);
-
+    // Swap: give mySquishy, receive offered squishies
     this.collection.delete(this.mySquishy.id);
-    this.offered.forEach(s => this.collection.add(s.id));
+    const newIds: string[] = [];
+    for (const sq of this.offered) {
+      this.collection.add(sq.id);
+      newIds.push(sq.id);
+    }
     saveCollection(this.collection);
-    this.onScore(this.collection.size);
+
+    const score = this.offered.reduce((s, q) => s + q.value, 0) - this.mySquishy.value;
+    this.onScore(Math.max(0, this.collection.size * 10));
+
+    const data: ResultData = {
+      given: this.mySquishy,
+      received: this.offered,
+      score,
+      collectionSize: this.collection.size,
+    };
 
     this.cameras.main.fadeOut(180, 13, 13, 26);
     this.cameras.main.once("camerafadeoutcomplete", () => {
-      this.scene.start("result", {
-        given: this.mySquishy, received: this.offered, score, collectionSize: this.collection.size,
-      } satisfies ResultData);
+      this.scene.start("result", data);
     });
   }
 
-  private doAddMore(): void {
+  private doAddMore(gfx: Phaser.GameObjects.Graphics): void {
     if (this.addCount >= this.MAX_ADD) return;
     this.addCount++;
 
-    const map: Record<Personality, string[]> = {
-      generous: ["Okay! One more! 🎁", "Sure, take this too! 💖", "Here you go! ✨"],
-      fair:     ["Hmm… I could add one! 🤔", "Fine, one more! 😊", "Okay, deal? 🌸"],
-      stingy:   ["Ugh, fine! 😤", "This better be worth it! 😒", "Hard bargain! 😑"],
-    };
-    this.setSpeech(pick(map[this.cp.personality]));
-
     const used = [this.mySquishy.id, ...this.offered.map(s => s.id)];
-    this.offered.push(weightedRandomSquishy(this.mySquishy.value * 0.8, used));
+    const extra = weightedRandomSquishy(this.mySquishy.value * 0.6, used);
+    this.offered.push(extra);
 
     this.buildOfferedCards();
-    this.refreshThermometer(52, 516, VW - 104, 14, 11);
-    // rebuild add btn graphic to reflect new count
-    const addGfx = this.add.graphics();
-    this.refreshAddBtn(addGfx);
+    this.refreshAddBtn(gfx);
+
+    const barX = 52; const barY = 516; const barW = VW - 104; const barH = 14; const bulbR = 11;
+    this.refreshThermometer(barX, barY, barW, barH, bulbR);
+
+    // Reaction
+    const reactions = ["Fine, fine... 🙄", "Ugh, okay 😤", "Happy now?! 😩", "Last one! 😤"];
+    this.drawSpeechBubble(reactions[Math.min(this.addCount - 1, reactions.length - 1)] ?? "...");
   }
 
   private doReject(): void {
-    const map: Record<Personality, string[]> = {
-      generous: ["Oh no! 😢 Maybe someone else?", "Fine... 💔", "I thought we were friends! 😭"],
-      fair:     ["Your loss! 🤷", "Okay, moving on! 😊", "Fine! Maybe someone else! 😤"],
-      stingy:   ["FINE! Didn't want to anyway! 😤", "Whatever! 😒", "Hmph! 😤"],
-    };
-    this.setSpeech(pick(map[this.cp.personality]));
-    this.input.enabled = false;
-
-    this.time.delayedCall(700, () => {
-      this.cpIndex++;
-      if (this.cpIndex >= this.MAX_CP) {
-        this.cameras.main.fadeOut(180, 13, 13, 26);
-        this.cameras.main.once("camerafadeoutcomplete", () => {
-          this.scene.start("result", {
-            given: null, received: [], score: 0, collectionSize: this.collection.size,
-          } satisfies ResultData);
-        });
-        return;
-      }
+    this.cpIndex++;
+    if (this.cpIndex >= this.MAX_CP) {
+      // All traders done — go to result with no trade
+      const data: ResultData = {
+        given: null,
+        received: [],
+        score: 0,
+        collectionSize: this.collection.size,
+      };
       this.cameras.main.fadeOut(180, 13, 13, 26);
-      this.cameras.main.once("camerafadeoutcomplete", () => {
-        this.input.enabled = true;
-        this.buildTrade();
-      });
-    });
+      this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("result", data));
+    } else {
+      this.cameras.main.fadeOut(140, 13, 13, 26);
+      this.cameras.main.once("camerafadeoutcomplete", () => this.buildTrade());
+    }
   }
 }
 
@@ -726,126 +743,111 @@ class TradeScene extends Phaser.Scene {
 
 class ResultScene extends Phaser.Scene {
   private readonly onScore: (n: number) => void;
+
   constructor(onScore: (n: number) => void) {
     super("result");
     this.onScore = onScore;
   }
 
   create(data: ResultData): void {
-    this.onScore(data.collectionSize);
     this.add.rectangle(VW / 2, VH / 2, VW, VH, BG);
 
-    // Grid
     const gridGfx = this.add.graphics();
     gridGfx.lineStyle(1, 0x1a1a30, 1);
     for (let x = 0; x < VW; x += 40) { gridGfx.moveTo(x, 0); gridGfx.lineTo(x, VH); }
     for (let y = 0; y < VH; y += 40) { gridGfx.moveTo(0, y); gridGfx.lineTo(VW, y); }
     gridGfx.strokePath();
 
-    if (!data.given) {
-      this.add.text(VW / 2, VH / 2 - 80, "😔", { fontSize: "72px" }).setOrigin(0.5);
-      this.add.text(VW / 2, VH / 2, "No trade made!", {
-        fontFamily: "Fraunces, serif", fontSize: "30px", color: WHITE,
+    const traded = data.given !== null;
+    const gained = data.score > 0;
+
+    // Header
+    this.add.text(VW / 2, 60, traded ? (gained ? "📈 NICE TRADE!" : "📉 ROUGH DEAL") : "😤 NO DEAL", {
+      fontFamily: "Fraunces, serif",
+      fontSize: "30px",
+      color: traded ? (gained ? hexStr(NEON_G) : hexStr(NEON_R)) : hexStr(NEON_Y),
+      stroke: "#000000",
+      strokeThickness: 4,
+    }).setOrigin(0.5);
+
+    if (traded && data.given) {
+      // Given
+      this.add.text(VW / 2, 108, "You gave away", {
+        fontFamily: "Manrope, sans-serif", fontSize: "12px", color: MUTED,
       }).setOrigin(0.5);
-      this.add.text(VW / 2, VH / 2 + 50, "Better luck next time!", {
-        fontFamily: "Manrope, sans-serif", fontSize: "16px", color: SUBTEXT,
+      this.add.text(VW / 2, 130, `${data.given.emoji}  ${data.given.name}`, {
+        fontFamily: "Manrope, sans-serif", fontSize: "18px", fontStyle: "bold", color: WHITE,
+      }).setOrigin(0.5);
+
+      // Arrow
+      this.add.text(VW / 2, 162, "↕", {
+        fontFamily: "Manrope, sans-serif", fontSize: "22px", color: hexStr(ACCENT2),
+      }).setOrigin(0.5);
+
+      // Received
+      this.add.text(VW / 2, 188, "You received", {
+        fontFamily: "Manrope, sans-serif", fontSize: "12px", color: MUTED,
+      }).setOrigin(0.5);
+
+      const receivedStr = data.received.map(s => `${s.emoji} ${s.name}`).join("  +  ");
+      this.add.text(VW / 2, 212, receivedStr, {
+        fontFamily: "Manrope, sans-serif", fontSize: "16px", fontStyle: "bold", color: WHITE,
+        wordWrap: { width: VW - 40 }, align: "center",
+      }).setOrigin(0.5);
+
+      // Score delta
+      const deltaStr = data.score >= 0 ? `+${data.score} value` : `${data.score} value`;
+      const deltaColor = data.score >= 0 ? hexStr(NEON_G) : hexStr(NEON_R);
+      this.add.text(VW / 2, 268, deltaStr, {
+        fontFamily: "Manrope, sans-serif", fontSize: "14px", fontStyle: "bold", color: deltaColor,
       }).setOrigin(0.5);
     } else {
-      this.spawnConfetti();
-
-      this.add.text(VW / 2, 72, "🎉 TRADE COMPLETE! 🎉", {
-        fontFamily: "Fraunces, serif", fontSize: "26px", color: WHITE,
-        stroke: hexStr(ACCENT), strokeThickness: 4,
-      }).setOrigin(0.5);
-
-      this.add.text(VW / 2, 128, "You gave:", {
-        fontFamily: "Manrope, sans-serif", fontSize: "13px", color: MUTED,
-      }).setOrigin(0.5);
-      this.add.text(VW / 2, 158, `${data.given.emoji}  ${data.given.name}`, {
-        fontFamily: "Manrope, sans-serif", fontSize: "20px", fontStyle: "bold", color: WHITE,
-      }).setOrigin(0.5);
-
-      this.add.text(VW / 2, 188, "⬇️", { fontSize: "18px" }).setOrigin(0.5);
-
-      this.add.text(VW / 2, 218, "You got:", {
-        fontFamily: "Manrope, sans-serif", fontSize: "13px", color: MUTED,
-      }).setOrigin(0.5);
-
-      const received = data.received;
-      const cardW = Math.min(110, (VW - 40 - 10 * (received.length - 1)) / received.length);
-      const totalW = received.length * cardW + (received.length - 1) * 10;
-      const startX = (VW - totalW) / 2 + cardW / 2;
-      const cy = 310;
-
-      received.forEach((sq, i) => {
-        const cx = startX + i * (cardW + 10);
-        const rc = RARITY_COLORS[sq.rarity];
-        const cardGfx = this.add.graphics();
-        roundRect(cardGfx, cx - cardW / 2, cy - 55, cardW, 110, 12, SURFACE, 1, rc, 2);
-        this.add.text(cx, cy - 22, sq.emoji, { fontSize: "28px" }).setOrigin(0.5);
-        this.add.text(cx, cy + 18, sq.name, {
-          fontFamily: "Manrope, sans-serif", fontSize: "11px", fontStyle: "bold", color: WHITE,
-          wordWrap: { width: cardW - 8 }, align: "center",
-        }).setOrigin(0.5);
-        this.add.text(cx, cy + 38, sq.rarity.toUpperCase(), {
-          fontFamily: "Manrope, sans-serif", fontSize: "9px", color: hexStr(rc),
-        }).setOrigin(0.5);
-
-        const targets = [cardGfx];
-        targets.forEach(t => t.setScale(0.01));
-        this.tweens.add({ targets, scaleX: 1, scaleY: 1, duration: 320, delay: i * 80, ease: "Back.easeOut" });
-      });
-
-      // Score bar
-      const scoreGfx = this.add.graphics();
-      roundRect(scoreGfx, 20, 400, VW - 40, 70, 14, SURFACE, 1, BORDER, 1);
-      this.add.text(VW / 2, 418, "TRADE SCORE", {
-        fontFamily: "Manrope, sans-serif", fontSize: "10px", fontStyle: "bold", color: MUTED,
-      }).setOrigin(0.5);
-      this.add.text(VW / 2, 450, `${data.score} pts`, {
-        fontFamily: "Fraunces, serif", fontSize: "32px", color: data.score >= 70 ? hexStr(NEON_G) : data.score >= 40 ? hexStr(NEON_Y) : hexStr(NEON_R),
-      }).setOrigin(0.5);
-
-      // Collection progress
-      const progGfx = this.add.graphics();
-      roundRect(progGfx, 20, 488, VW - 40, 48, 12, SURFACE2, 1, BORDER, 1);
-      this.add.text(VW / 2, 512, `📦  ${data.collectionSize} / ${SQUISHIES.length} squishies collected`, {
-        fontFamily: "Manrope, sans-serif", fontSize: "13px", color: SUBTEXT,
+      this.add.text(VW / 2, 200, "You walked away empty handed.\nMaybe next time! 💪", {
+        fontFamily: "Manrope, sans-serif", fontSize: "16px", color: SUBTEXT,
+        align: "center", wordWrap: { width: VW - 60 },
       }).setOrigin(0.5);
     }
 
-    // Buttons
-    this.makePillButton(VW / 2, 590, 200, 54, "TRADE AGAIN  ▶", ACCENT, WHITE, () => {
-      this.cameras.main.fadeOut(160, 13, 13, 26);
+    // Collection size
+    const pillGfx = this.add.graphics();
+    roundRect(pillGfx, VW / 2 - 110, 308, 220, 36, 18, SURFACE2, 1, BORDER, 1);
+    this.add.text(VW / 2, 326, `📦  Collection: ${data.collectionSize} / ${SQUISHIES.length}`, {
+      fontFamily: "Manrope, sans-serif", fontSize: "13px", color: SUBTEXT,
+    }).setOrigin(0.5);
+
+    // New collection badge if unlocked
+    if (traded && data.received.length > 0) {
+      const newOnes = data.received.filter(s => {
+        const col = loadCollection();
+        return col.has(s.id);
+      });
+      if (newOnes.length > 0) {
+        this.add.text(VW / 2, 360, "🆕 New squishy unlocked!", {
+          fontFamily: "Manrope, sans-serif", fontSize: "13px", fontStyle: "bold", color: hexStr(NEON_G),
+        }).setOrigin(0.5);
+      }
+    }
+
+    // Play again
+    this.makePillButton(VW / 2, 450, 220, 58, "TRADE AGAIN  ▶", ACCENT, WHITE, () => {
+      this.cameras.main.fadeOut(180, 13, 13, 26);
       this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("trade"));
     });
-    this.makeGhostButton(VW / 2, 652, 200, 46, "MAIN MENU", () => {
-      this.cameras.main.fadeOut(160, 13, 13, 26);
+
+    // Collection
+    this.makeGhostButton(VW / 2, 526, 220, 52, "MY COLLECTION  →", () => {
+      this.cameras.main.fadeOut(180, 13, 13, 26);
+      this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("collection"));
+    });
+
+    // Menu
+    this.makeGhostButton(VW / 2, 594, 220, 44, "← MENU", () => {
+      this.cameras.main.fadeOut(180, 13, 13, 26);
       this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("menu"));
     });
 
-    this.cameras.main.fadeIn(220, 13, 13, 26);
-  }
-
-  private spawnConfetti(): void {
-    const colors = [hexStr(NEON_G), hexStr(NEON_R), hexStr(NEON_Y), hexStr(ACCENT2), "#f472b6"];
-    for (let i = 0; i < 22; i++) {
-      const x = Math.random() * VW;
-      const t = this.add.text(x, -20, pick(["✦", "◆", "★", "▲"]), {
-        fontSize: `${10 + Math.random() * 10}px`,
-        color: pick(colors),
-      }).setAlpha(0.9);
-      this.tweens.add({
-        targets: t,
-        y: VH + 20,
-        x: x + (Math.random() - 0.5) * 80,
-        angle: Math.random() * 360,
-        duration: 1800 + Math.random() * 1200,
-        delay: Math.random() * 800,
-        ease: "Sine.easeIn",
-        onComplete: () => t.destroy(),
-      });
-    }
+    this.cameras.main.fadeIn(240, 13, 13, 26);
+    this.onScore(data.collectionSize * 10);
   }
 
   private makePillButton(
@@ -856,7 +858,7 @@ class ResultScene extends Phaser.Scene {
     const gfx = this.add.graphics();
     roundRect(gfx, x - w / 2, y - h / 2, w, h, h / 2, fill, 1);
     const hitZone = this.add.rectangle(x, y, w, h, 0x000000, 0).setInteractive({ useHandCursor: true });
-    this.add.text(x, y, label, { fontFamily: "Manrope, sans-serif", fontSize: "16px", fontStyle: "bold", color: textColor }).setOrigin(0.5);
+    this.add.text(x, y, label, { fontFamily: "Manrope, sans-serif", fontSize: "17px", fontStyle: "bold", color: textColor }).setOrigin(0.5);
     hitZone.on("pointerover", () => this.tweens.add({ targets: gfx, scaleX: 1.04, scaleY: 1.04, duration: 80 }));
     hitZone.on("pointerout",  () => this.tweens.add({ targets: gfx, scaleX: 1.0,  scaleY: 1.0,  duration: 80 }));
     hitZone.on("pointerdown", onDown);
@@ -883,9 +885,9 @@ class CollectionScene extends Phaser.Scene {
 
   create(): void {
     const col = loadCollection();
+
     this.add.rectangle(VW / 2, VH / 2, VW, VH, BG);
 
-    // Grid
     const gridGfx = this.add.graphics();
     gridGfx.lineStyle(1, 0x1a1a30, 1);
     for (let x = 0; x < VW; x += 40) { gridGfx.moveTo(x, 0); gridGfx.lineTo(x, VH); }
@@ -897,57 +899,69 @@ class CollectionScene extends Phaser.Scene {
       stroke: hexStr(ACCENT), strokeThickness: 4,
     }).setOrigin(0.5);
 
-    this.add.text(VW / 2, 68, `${col.size} / ${SQUISHIES.length} squishies`, {
+    this.add.text(VW / 2, 66, `${col.size} / ${SQUISHIES.length} squishies`, {
       fontFamily: "Manrope, sans-serif", fontSize: "13px", color: SUBTEXT,
     }).setOrigin(0.5);
 
     // Grid of squishies
-    const cols = 4; const cardW = 88; const cardH = 90;
-    const gapX = (VW - cols * cardW) / (cols + 1);
-    const startY = 100;
+    const cols  = 4;
+    const cellW = (VW - 24) / cols;
+    const cellH = 90;
+    const startY = 96;
 
     SQUISHIES.forEach((sq, idx) => {
-      const col_ = idx % cols;
-      const row  = Math.floor(idx / cols);
-      const cx   = gapX + col_ * (cardW + gapX) + cardW / 2;
-      const cy   = startY + row * (cardH + 10) + cardH / 2;
+      const col_i = idx % cols;
+      const row   = Math.floor(idx / cols);
+      const cx    = 12 + col_i * cellW + cellW / 2;
+      const cy    = startY + row * cellH + cellH / 2;
+
       const owned = col.has(sq.id);
       const rc    = RARITY_COLORS[sq.rarity];
 
       const cardGfx = this.add.graphics();
-      roundRect(cardGfx, cx - cardW / 2, cy - cardH / 2, cardW, cardH, 10,
-        owned ? SURFACE : 0x0a0a14, 1,
-        owned ? rc : BORDER, owned ? 2 : 1);
+      roundRect(
+        cardGfx,
+        cx - cellW / 2 + 4, cy - cellH / 2 + 4,
+        cellW - 8, cellH - 8,
+        8,
+        owned ? SURFACE : 0x0a0a14,
+        1,
+        owned ? rc : BORDER,
+        owned ? 2 : 1,
+      );
 
-      this.add.text(cx, cy - 16, sq.emoji, {
-        fontSize: "26px", alpha: owned ? 1 : 0.2,
-      }).setOrigin(0.5).setAlpha(owned ? 1 : 0.2);
-
-      this.add.text(cx, cy + 16, sq.name, {
-        fontFamily: "Manrope, sans-serif", fontSize: "8px", fontStyle: "bold",
-        color: owned ? WHITE : MUTED,
-        wordWrap: { width: cardW - 8 }, align: "center",
-      }).setOrigin(0.5);
-
-      this.add.text(cx, cy + 32, owned ? sq.rarity.toUpperCase() : "???", {
-        fontFamily: "Manrope, sans-serif", fontSize: "7px",
-        color: owned ? hexStr(rc) : "#374151",
-      }).setOrigin(0.5);
+      if (owned) {
+        this.add.text(cx, cy - 16, sq.emoji, { fontSize: "22px" }).setOrigin(0.5);
+        this.add.text(cx, cy + 12, sq.name, {
+          fontFamily: "Manrope, sans-serif", fontSize: "8px", fontStyle: "bold", color: WHITE,
+          wordWrap: { width: cellW - 12 }, align: "center",
+        }).setOrigin(0.5);
+        this.add.text(cx, cy + 26, sq.rarity, {
+          fontFamily: "Manrope, sans-serif", fontSize: "7px", color: hexStr(rc),
+          wordWrap: { width: cellW - 12 }, align: "center",
+        }).setOrigin(0.5);
+      } else {
+        this.add.text(cx, cy, "?", {
+          fontFamily: "Fraunces, serif", fontSize: "26px", color: "#1e1e38",
+        }).setOrigin(0.5);
+      }
     });
 
     // Back button
     const backGfx = this.add.graphics();
-    roundRect(backGfx, VW / 2 - 100, VH - 62, 200, 46, 23, SURFACE2, 1, BORDER, 1);
-    const backHit = this.add.rectangle(VW / 2, VH - 39, 200, 46, 0, 0).setInteractive({ useHandCursor: true });
-    this.add.text(VW / 2, VH - 39, "← BACK", {
+    roundRect(backGfx, VW / 2 - 100, VH - 64, 200, 46, 23, SURFACE2, 1, BORDER, 1);
+    const backHit = this.add.rectangle(VW / 2, VH - 41, 200, 46, 0, 0).setInteractive({ useHandCursor: true });
+    this.add.text(VW / 2, VH - 41, "← BACK", {
       fontFamily: "Manrope, sans-serif", fontSize: "15px", fontStyle: "bold", color: hexStr(ACCENT2),
     }).setOrigin(0.5);
+    backHit.on("pointerover", () => this.tweens.add({ targets: backGfx, scaleX: 1.04, scaleY: 1.04, duration: 80 }));
+    backHit.on("pointerout",  () => this.tweens.add({ targets: backGfx, scaleX: 1.0,  scaleY: 1.0,  duration: 80 }));
     backHit.on("pointerdown", () => {
-      this.cameras.main.fadeOut(160, 13, 13, 26);
+      this.cameras.main.fadeOut(180, 13, 13, 26);
       this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("menu"));
     });
 
-    this.cameras.main.fadeIn(220, 13, 13, 26);
+    this.cameras.main.fadeIn(240, 13, 13, 26);
   }
 }
 
@@ -971,5 +985,6 @@ export function startGame(parent: HTMLElement, onScore: (n: number) => void): ()
       autoCenter: Phaser.Scale.CENTER_BOTH,
     },
   });
+
   return () => game.destroy(true);
 }
