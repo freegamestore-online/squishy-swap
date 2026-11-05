@@ -46,7 +46,6 @@ const NEON_Y    = 0xd97706; // rich amber
 const WHITE_STR = "#ffffff";
 const DARK_STR  = "#1e1b4b"; // near-black indigo for body text
 const MUTED_STR = "#6d28d9"; // muted violet for labels
-const SUB_STR   = "#7c3aed"; // subtext purple
 
 // ─── Difficulty badge colours ─────────────────────────────────────────────────
 
@@ -716,11 +715,8 @@ class TradeScene extends Phaser.Scene {
 // ─── Result Scene ─────────────────────────────────────────────────────────────
 
 class ResultScene extends Phaser.Scene {
-  private readonly onScore: (n: number) => void;
-
-  constructor(onScore: (n: number) => void) {
+  constructor() {
     super("result");
-    this.onScore = onScore;
   }
 
   create(data: ResultData): void {
@@ -947,7 +943,7 @@ export function startGame(parent: HTMLElement, onScore: (n: number) => void): ()
     scene: [
       MenuScene,
       new TradeScene(onScore),
-      new ResultScene(onScore),
+      new ResultScene(),
       CollectionScene,
     ],
     scale: {
